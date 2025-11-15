@@ -20,6 +20,7 @@ https://cloud.google.com/application/web3/faucet/ethereum/sepolia
 
 ## Deployments
 
+#### Sepolia
 Deployment Transaction
 https://sepolia.etherscan.io/tx/0x3e67bffc08f5cfa27f8c270ca1c10dd1e64ba04411eb1b85e99aa72fc01d885c
 
@@ -41,12 +42,6 @@ $ forge build
 
 ```shell
 cast wallet import flutter-deployer --interactive
-
-forge create ./src/FlutterCounter.sol:FlutterCounter --rpc-url https://sepolia.drpc.org --account flutter-deployer
-
-
-forge create ./src/FlutterCounter.sol:FlutterCounter --rpc-url https://sepolia.base.org --account flutter-deployer
-
 
 forge create ./src/FlutterCounter.sol:FlutterCounter --rpc-url https://sepolia.drpc.org --account flutter-deployer
 ```
