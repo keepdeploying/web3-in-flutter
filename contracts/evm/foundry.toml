@@ -1,0 +1,30 @@
+[profile.default]
+src = "src"
+out = "out"
+test = "test"
+script = "script"
+libs = ["dependencies"]
+solc_version = "0.8.37"
+evm_version = "prague"
+optimizer = true
+optimizer_runs = 200
+# Keep the bytecode identical on every machine. CREATE2 addresses depend on
+# the exact bytecode, so the counter lands at the same address on every
+# network only if the build is reproducible.
+bytecode_hash = "none"
+cbor_metadata = false
+
+[dependencies]
+forge-std = "1.17.0"
+
+[soldeer]
+remappings_generate = true
+remappings_regenerate = true
+remappings_version = false
+remappings_location = "txt"
+
+[rpc_endpoints]
+sepolia = "https://sepolia.gateway.tenderly.co"
+base_sepolia = "https://sepolia.base.org"
+polygon_amoy = "https://polygon-amoy-bor-rpc.publicnode.com"
+arbitrum_sepolia = "https://sepolia-rollup.arbitrum.io/rpc"

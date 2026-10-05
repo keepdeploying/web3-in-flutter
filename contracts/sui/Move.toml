@@ -1,0 +1,7 @@
+[package]
+name = "flutter_counter"
+edition = "2024"
+license = "MIT"
+
+# The Sui framework and Move standard library are added automatically.
+[dependencies]

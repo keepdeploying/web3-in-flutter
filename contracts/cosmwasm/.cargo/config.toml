@@ -1,0 +1,7 @@
+# wasmvm 2.2 (used by Osmosis v31) only accepts plain "MVP" WebAssembly.
+# Rust 1.82+ turns on newer Wasm features by default, so switch them off.
+[target.wasm32-unknown-unknown]
+rustflags = ["-C", "target-cpu=mvp", "-C", "link-arg=-s"]
+
+[alias]
+wasm = "build --release --lib --target wasm32-unknown-unknown"

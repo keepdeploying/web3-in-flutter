@@ -1,0 +1,21 @@
+[toolchain]
+
+[features]
+resolution = true
+skip-lint = false
+
+[programs.localnet]
+flutter_counter = "B5FWXqM3hrna9SCPp2r2APzEmaMzash3N6t9kkwpD5qH"
+
+[programs.devnet]
+flutter_counter = "B5FWXqM3hrna9SCPp2r2APzEmaMzash3N6t9kkwpD5qH"
+
+[provider]
+cluster = "devnet"
+# The public dev wallet. Testnets only.
+wallet = "../../keys/solana-dev-keypair.json"
+
+[scripts]
+test = "cargo test"
+
+[hooks]

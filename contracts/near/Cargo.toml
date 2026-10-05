@@ -1,0 +1,24 @@
+[package]
+name = "flutter-counter"
+version = "0.1.0"
+edition = "2021"
+description = "Flutter Counter on NEAR (testnet)"
+license = "MIT"
+repository = "https://github.com/keepdeploying/web3-in-flutter"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+near-sdk = "5.29"
+
+[dev-dependencies]
+near-sdk = { version = "5.29", features = ["unit-testing"] }
+
+[profile.release]
+codegen-units = 1
+opt-level = "z"
+lto = true
+debug = false
+panic = "abort"
+overflow-checks = true

@@ -1,0 +1,34 @@
+[package]
+name = "flutter-counter"
+version = "0.1.0"
+edition = "2021"
+description = "Flutter Counter on CosmWasm (Osmosis testnet)"
+license = "MIT"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+# Lets other contracts import this crate without exporting entry points.
+library = []
+
+[dependencies]
+# Osmosis v31 runs wasmvm 2.2, so stay on cosmwasm-std 2.2.
+cosmwasm-std = "2.2"
+cosmwasm-schema = "2.2"
+cw-storage-plus = "2.0"
+thiserror = "2"
+
+[dev-dependencies]
+cw-multi-test = "2.5"
+
+[profile.release]
+opt-level = 3
+debug = false
+rpath = false
+lto = true
+debug-assertions = false
+codegen-units = 1
+panic = "abort"
+incremental = false
+overflow-checks = true
