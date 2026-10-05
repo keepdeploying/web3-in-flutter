@@ -1,0 +1,63 @@
+# Web3 in Flutter commits only source code and the files that declare
+# dependencies. Everything below is generated or downloaded. Run
+# `dart run tool/setup_platforms.dart` to bring back the platform folders.
+
+# OS and editors
+.DS_Store
+*.swp
+*.iml
+*.ipr
+*.iws
+.idea/
+.vscode/
+.history
+
+# Dart and Flutter
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+coverage/
+**/doc/api/
+.flutter-plugins
+.flutter-plugins-dependencies
+flutter/.metadata
+flutter/android/
+flutter/ios/
+flutter/macos/
+flutter/windows/
+flutter/linux/
+flutter/web/
+app.*.symbols
+app.*.map.json
+.widget_preview/
+migrate_working_dir/
+
+# Environment files (keep the examples)
+.env
+!.env.example
+
+# Foundry and Soldeer
+contracts/evm/out/
+contracts/evm/cache/
+contracts/evm/broadcast/*/31337/
+contracts/evm/broadcast/**/*.lock
+contracts/evm/dependencies/
+contracts/evm/lib/
+
+# Rust (Anchor, CosmWasm, NEAR)
+target/
+contracts/solana/.anchor/
+contracts/solana/test-ledger/
+contracts/solana/.surfpool/
+contracts/cosmwasm/artifacts/
+
+# Sui
+contracts/sui/build/
+
+# JavaScript tooling, if any appears
+node_modules/
+contracts/sui/.sui-config/
+contracts/sui/publish-*.json
+contracts/cosmwasm/.osmosis-home/

@@ -1,0 +1,85 @@
+# Web3 in Flutter
+
+One Flutter app, **Flutter Counter**, that proves Flutter can be a complete Web3 client. It does three things on every major chain family:
+
+1. **Reads** blockchain data: balances, recent activity and counter values.
+2. **Authenticates** users in three ways:
+   - the app is the wallet;
+   - it connects to wallets already installed on the device, without an SDK;
+   - it connects through an SDK (Reown).
+
+   Users then sign in to a backend with a signed message.
+3. **Writes** to the blockchain by calling a counter contract.
+
+| Chain family | Networks |
+| --- | --- |
+| EVM | Sepolia, Base Sepolia, Polygon Amoy, Arbitrum Sepolia |
+| Solana | devnet |
+| Sui | testnet |
+| Cosmos | Osmosis testnet (`osmo-test-5`) |
+| NEAR | testnet |
+
+> **Testnets only.** The keys in `keys/` are public on purpose so that anyone can redeploy and test. Never send real funds to them.
+
+## Repo Layout
+
+| Folder | What it holds |
+| --- | --- |
+| `flutter/` | The Flutter app |
+| `server/` | Pure Dart backend: nonces, signature verifiers for every chain, sessions |
+| `contracts/` | The counter contract for each chain, and `deployments.json` with every address |
+| `keys/` | Public testnet keys: the dev recovery phrase and the Android debug keystore |
+| `tool/` | Setup, deploy and release scripts |
+| `DEPLOYS.md` | Log of every contract deploy, web deploy and APK release |
+
+The repo commits only source code and the files that declare dependencies. Platform folders (`flutter/android/`, `flutter/ios/`, and so on), build output and downloaded dependencies are generated on your machine.
+
+## Prerequisites
+
+- [Flutter](https://docs.flutter.dev/get-started/install) 3.47 or newer (Dart 3.13 or newer)
+- For each platform you want to run, its usual Flutter setup (Android Studio, Xcode, Visual Studio, or the Linux desktop packages)
+- On Linux: `libsecret-1-dev` (for secure storage)
+
+You only need the chain toolchains (Foundry, Anchor, Sui CLI, and so on) if you want to redeploy contracts. See `contracts/README.md`.
+
+## Run the App
+
+```bash
+git clone https://github.com/keepdeploying/web3-in-flutter.git
+cd web3-in-flutter
+flutter pub get
+dart run tool/setup_platforms.dart
+cd flutter
+flutter run
+```
+
+`tool/setup_platforms.dart` runs `flutter create` for Android, iOS, web, macOS, Windows and Linux. It then applies the changes this app needs, such as the Android INTERNET permission, macOS network access and the shared signing key. It is safe to run again.
+
+## Run the Server
+
+```bash
+cd server
+dart run bin/server.dart
+```
+
+The server listens on `http://localhost:8080`. By default, the app runs the same Dart code in-process, so you only need the server if you want to test the HTTP backend.
+
+## Tests
+
+```bash
+cd flutter && flutter test
+cd server && dart test
+```
+
+## Toolchain Versions Used
+
+| Tool | Version |
+| --- | --- |
+| Flutter / Dart | 3.47.6 / 3.13.5 |
+| Foundry / Solidity | 1.8.4 / 0.8.37 |
+| Anchor / Agave (Solana CLI) | 1.2.0 / 4.3.0 |
+| Sui CLI | 1.81.0 |
+| osmosisd | 31.0.3 |
+| near-cli-rs / cargo-near | 0.30.1 / 0.22.0 |
+| Rust | 1.97 (host), 1.86 for CosmWasm, Solana platform tools for on-chain builds |
+| binaryen (wasm-opt) / cosmwasm-check | 133 / 2.2.10 |

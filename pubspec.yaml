@@ -1,0 +1,13 @@
+name: web3_in_flutter
+description: Workspace root for the Web3 in Flutter example. Holds the shared tools in tool/.
+publish_to: none
+
+environment:
+  sdk: ^3.13.5
+
+workspace:
+  - flutter
+  - server
+
+dev_dependencies:
+  lints: ^6.1.0

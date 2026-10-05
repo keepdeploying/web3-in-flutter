@@ -1,0 +1,17 @@
+name: flutter_counter_server
+description: Backend for the Flutter Counter app. Issues nonces, verifies signed messages from every chain and keeps sessions.
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: ^3.13.5
+
+resolution: workspace
+
+dependencies:
+  shelf: ^1.4.2
+  shelf_router: ^1.1.4
+
+dev_dependencies:
+  lints: ^6.1.0
+  test: ^1.31.1
