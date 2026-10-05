@@ -12,13 +12,13 @@ One Flutter app, **Flutter Counter**, that proves Flutter can be a complete Web3
 
 3. **Writes** to the blockchain by calling a counter contract.
 
-| Chain family | Networks                                              |
-| ------------ | ----------------------------------------------------- |
-| EVM          | Sepolia, Base Sepolia, Polygon Amoy, Arbitrum Sepolia |
-| Solana       | devnet                                                |
-| Sui          | testnet                                               |
-| Cosmos       | Osmosis testnet (`osmo-test-5`)                       |
-| NEAR         | testnet                                               |
+| Chain family | Networks                                            |
+| ------------ | --------------------------------------------------- |
+| EVM          | Sepolia, Base Sepolia, Arbitrum Sepolia, OP Sepolia |
+| Solana       | devnet                                              |
+| Sui          | testnet                                             |
+| Cosmos       | Osmosis testnet (`osmo-test-5`)                     |
+| NEAR         | testnet                                             |
 
 > **Testnets only.** The keys in `keys/` are public on purpose so that anyone can redeploy and test. Never send real funds to them.
 

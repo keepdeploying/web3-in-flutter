@@ -28,8 +28,8 @@ void main(List<String> args) {
   print('\nExplorers');
   print('  Sepolia          https://sepolia.etherscan.io/address/${a(ChainFamily.evm)}');
   print('  Base Sepolia     https://sepolia.basescan.org/address/${a(ChainFamily.evm)}');
-  print('  Polygon Amoy     https://amoy.polygonscan.com/address/${a(ChainFamily.evm)}');
   print('  Arbitrum Sepolia https://sepolia.arbiscan.io/address/${a(ChainFamily.evm)}');
+  print('  OP Sepolia       https://sepolia-optimism.etherscan.io/address/${a(ChainFamily.evm)}');
   print('  Solana devnet    https://explorer.solana.com/address/${a(ChainFamily.solana)}?cluster=devnet');
   print('  Sui testnet      https://suiscan.xyz/testnet/account/${a(ChainFamily.sui)}');
   print('  Osmosis testnet  https://celatone.osmosis.zone/osmo-test-5/accounts/${a(ChainFamily.cosmos)}');

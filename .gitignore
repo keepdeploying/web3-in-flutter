@@ -51,6 +51,7 @@ contracts/evm/out/
 contracts/evm/cache/
 contracts/evm/broadcast/*/31337/
 contracts/evm/broadcast/**/*.lock
+contracts/evm/broadcast/**/dry-run/
 contracts/evm/dependencies/
 contracts/evm/lib/
 

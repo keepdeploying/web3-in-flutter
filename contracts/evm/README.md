@@ -13,7 +13,7 @@ Events: `UserRegistered(user, totalUsers)` and `CounterChanged(user, oldValue, n
 
 ## Same Address on Every Network
 
-`script/Deploy.s.sol` deploys with CREATE2 through the standard deterministic deployer (`0x4e59b44847b379578588920cA78FbF26c0B4956C`). That deployer exists on Sepolia, Base Sepolia, Polygon Amoy and Arbitrum Sepolia.
+`script/Deploy.s.sol` deploys with CREATE2 through the standard deterministic deployer (`0x4e59b44847b379578588920cA78FbF26c0B4956C`). That deployer exists on Sepolia, Base Sepolia, Arbitrum Sepolia and OP Sepolia.
 
 The address depends only on the deployer, the salt and the exact bytecode. `foundry.toml` pins the compiler and turns off metadata hashes, so every machine builds the same bytecode. The result is the same address everywhere: `0x49f5A4DD302f5BA6F3414c7827428dbBe8E8D16d`.
 
@@ -42,7 +42,7 @@ forge test
 ## Deploy
 
 ```bash
-./deploy.sh all                     # Sepolia, Base Sepolia, Polygon Amoy, Arbitrum Sepolia
+./deploy.sh all                     # Sepolia, Base Sepolia, Arbitrum Sepolia, OP Sepolia
 ./deploy.sh sepolia                 # just one network
 ```
 

@@ -21,10 +21,17 @@ contract Deploy is Script {
             return FlutterCounter(predicted);
         }
 
+        // Call the deterministic deployer directly. Its input is the salt
+        // followed by the contract's creation code, and it returns the new
+        // contract's address. (`new FlutterCounter{salt: SALT}()` relies on
+        // Foundry routing the call through the deployer, which it doesn't do
+        // on every network.)
         vm.startBroadcast();
-        counter = new FlutterCounter{salt: SALT}();
+        (bool ok, bytes memory result) = CREATE2_FACTORY.call(abi.encodePacked(SALT, type(FlutterCounter).creationCode));
         vm.stopBroadcast();
 
+        require(ok, "deterministic deployer call failed");
+        counter = FlutterCounter(address(bytes20(result)));
         require(address(counter) == predicted, "unexpected address");
         console.log("Deployed FlutterCounter at:", address(counter));
     }

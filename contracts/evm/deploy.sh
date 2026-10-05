@@ -19,7 +19,7 @@ command -v forge >/dev/null || {
 
 MNEMONIC=../../keys/dev-mnemonic.txt
 SENDER=0xfFFAa29e82d5455985a908235536d2cD01aCce47
-ALL=(sepolia base_sepolia polygon_amoy arbitrum_sepolia)
+ALL=(sepolia base_sepolia arbitrum_sepolia optimism_sepolia)
 [ $# -gt 0 ] || { echo "Usage: ./deploy.sh all | <network>... (${ALL[*]})"; exit 1; }
 if [ "$1" = all ]; then NETWORKS=("${ALL[@]}"); else NETWORKS=("$@"); fi
 

@@ -10,13 +10,13 @@
         "chainId": 84532,
         "deployBlock": 47732129
       },
-      "polygonAmoy": {
-        "chainId": 80002,
-        "deployBlock": null
-      },
       "arbitrumSepolia": {
         "chainId": 421614,
         "deployBlock": 316132592
+      },
+      "optimismSepolia": {
+        "chainId": 11155420,
+        "deployBlock": 49716129
       }
     }
   },

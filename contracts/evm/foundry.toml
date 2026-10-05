@@ -29,5 +29,5 @@ line_length = 120
 [rpc_endpoints]
 sepolia = "https://sepolia.gateway.tenderly.co"
 base_sepolia = "https://sepolia.base.org"
-polygon_amoy = "https://polygon-amoy-bor-rpc.publicnode.com"
+optimism_sepolia = "https://sepolia.optimism.io"
 arbitrum_sepolia = "https://sepolia-rollup.arbitrum.io/rpc"
