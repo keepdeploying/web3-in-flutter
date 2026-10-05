@@ -2,12 +2,12 @@
 
 `src/FlutterCounter.sol` keeps an `int256` counter per address, plus `totalUsers`. A user is registered on their first call.
 
-| Function | What it does |
-| --- | --- |
-| `increment()`, `decrement()`, `reset()` | Change the caller's counter |
-| `counterOf(address)` | Read anyone's counter |
-| `totalUsers()` | How many addresses have used the counter |
-| `isUser(address)` | Whether an address has used it |
+| Function                                | What it does                             |
+| --------------------------------------- | ---------------------------------------- |
+| `increment()`, `decrement()`, `reset()` | Change the caller's counter              |
+| `counterOf(address)`                    | Read anyone's counter                    |
+| `totalUsers()`                          | How many addresses have used the counter |
+| `isUser(address)`                       | Whether an address has used it           |
 
 Events: `UserRegistered(user, totalUsers)` and `CounterChanged(user, oldValue, newValue, action)`.
 

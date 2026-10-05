@@ -2,11 +2,11 @@
 
 A CosmWasm contract that keeps an `i64` counter per sender, plus the number of users.
 
-| Message | What it does |
-| --- | --- |
-| Execute `{"increment":{}}`, `{"decrement":{}}`, `{"reset":{}}` | Change the sender's counter |
-| Query `{"value":{"user":"osmo1..."}}` | `{"value": 0, "is_user": false}` |
-| Query `{"total_users":{}}` | `{"total_users": 0}` |
+| Message                                                        | What it does                     |
+| -------------------------------------------------------------- | -------------------------------- |
+| Execute `{"increment":{}}`, `{"decrement":{}}`, `{"reset":{}}` | Change the sender's counter      |
+| Query `{"value":{"user":"osmo1..."}}`                          | `{"value": 0, "is_user": false}` |
+| Query `{"total_users":{}}`                                     | `{"total_users": 0}`             |
 
 Events: `wasm-user_registered` and `wasm-counter_changed`.
 

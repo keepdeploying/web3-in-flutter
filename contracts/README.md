@@ -5,13 +5,13 @@ Every chain gets the same simple **counter**:
 - Each user has their own counter, which can be incremented, decremented or reset.
 - The contract also tracks the total number of users.
 
-| Folder | Chain | Language and tooling |
-| --- | --- | --- |
-| `evm/` | Sepolia, Base Sepolia, Polygon Amoy, Arbitrum Sepolia | Solidity, Foundry |
-| `solana/` | Solana devnet | Rust, Anchor |
-| `sui/` | Sui testnet | Move, Sui CLI |
-| `cosmwasm/` | Osmosis testnet | Rust, CosmWasm |
-| `near/` | NEAR testnet | Rust, near-sdk, cargo-near |
+| Folder      | Chain                                                 | Language and tooling       |
+| ----------- | ----------------------------------------------------- | -------------------------- |
+| `evm/`      | Sepolia, Base Sepolia, Polygon Amoy, Arbitrum Sepolia | Solidity, Foundry          |
+| `solana/`   | Solana devnet                                         | Rust, Anchor               |
+| `sui/`      | Sui testnet                                           | Move, Sui CLI              |
+| `cosmwasm/` | Osmosis testnet                                       | Rust, CosmWasm             |
+| `near/`     | NEAR testnet                                          | Rust, near-sdk, cargo-near |
 
 Each folder's README explains how to install the tooling, then build, test and deploy. To install every toolchain at once, run:
 

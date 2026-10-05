@@ -1,0 +1,8 @@
+<!-- Android Studio, with the repository root open: runs the app in release mode. -->
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="main.dart (release mode)" type="FlutterRunConfigurationType" factoryName="Flutter">
+    <option name="additionalArgs" value="--release" />
+    <option name="filePath" value="$PROJECT_DIR$/flutter/lib/main.dart" />
+    <method v="2" />
+  </configuration>
+</component>

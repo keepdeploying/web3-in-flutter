@@ -9,28 +9,30 @@ One Flutter app, **Flutter Counter**, that proves Flutter can be a complete Web3
    - it connects through an SDK (Reown).
 
    Users then sign in to a backend with a signed message.
+
 3. **Writes** to the blockchain by calling a counter contract.
 
-| Chain family | Networks |
-| --- | --- |
-| EVM | Sepolia, Base Sepolia, Polygon Amoy, Arbitrum Sepolia |
-| Solana | devnet |
-| Sui | testnet |
-| Cosmos | Osmosis testnet (`osmo-test-5`) |
-| NEAR | testnet |
+| Chain family | Networks                                              |
+| ------------ | ----------------------------------------------------- |
+| EVM          | Sepolia, Base Sepolia, Polygon Amoy, Arbitrum Sepolia |
+| Solana       | devnet                                                |
+| Sui          | testnet                                               |
+| Cosmos       | Osmosis testnet (`osmo-test-5`)                       |
+| NEAR         | testnet                                               |
 
 > **Testnets only.** The keys in `keys/` are public on purpose so that anyone can redeploy and test. Never send real funds to them.
 
 ## Repo Layout
 
-| Folder | What it holds |
-| --- | --- |
-| `flutter/` | The Flutter app |
-| `server/` | Pure Dart backend: nonces, signature verifiers for every chain, sessions |
+| Folder       | What it holds                                                                  |
+| ------------ | ------------------------------------------------------------------------------ |
+| `flutter/`   | The Flutter app                                                                |
+| `server/`    | Pure Dart backend: nonces, signature verifiers for every chain, sessions       |
 | `contracts/` | The counter contract for each chain, and `deployments.json` with every address |
-| `keys/` | Public testnet keys: the dev recovery phrase and the Android debug keystore |
-| `tool/` | Setup, deploy and release scripts |
-| `DEPLOYS.md` | Log of every contract deploy, web deploy and APK release |
+| `keys/`      | Public testnet keys: the dev recovery phrase and the Android debug keystore    |
+| `scripts/`   | Publish the web app to GitHub Pages and the APK to GitHub Releases             |
+| `tool/`      | Dart tools, like `setup_platforms.dart`                                        |
+| `DEPLOYS.md` | Log of every contract deploy, web deploy and APK release                       |
 
 The repo commits only source code and the files that declare dependencies. Platform folders (`flutter/android/`, `flutter/ios/`, and so on), build output and downloaded dependencies are generated on your machine.
 
@@ -55,6 +57,11 @@ flutter run
 
 `tool/setup_platforms.dart` runs `flutter create` for Android, iOS, web, macOS, Windows and Linux. It then applies the changes this app needs, such as the Android INTERNET permission, macOS network access and the shared signing key. It is safe to run again.
 
+## Run From Your IDE
+
+- **VS Code:** open the repository's root folder and accept the recommended extensions. The Run and Debug view (Ctrl/Cmd + Shift + D) then lists the app (debug, profile, release, Chrome), the tests, the server, and "Server and Flutter" together. Opening the `flutter` folder on its own works too.
+- **Android Studio:** open the repository's root folder. The run configurations in `.idea/runConfigurations` show up in the toolbar.
+
 ## Run the Server
 
 ```bash
@@ -73,13 +80,22 @@ cd server && dart test
 
 ## Toolchain Versions Used
 
-| Tool | Version |
-| --- | --- |
-| Flutter / Dart | 3.47.6 / 3.13.5 |
-| Foundry / Solidity | 1.8.4 / 0.8.37 |
-| Anchor / Agave (Solana CLI) | 1.2.0 / 4.3.0 |
-| Sui CLI | 1.81.0 |
-| osmosisd | 31.0.3 |
-| near-cli-rs / cargo-near | 0.30.1 / 0.22.0 |
-| Rust | 1.97 (host), 1.86 for CosmWasm, Solana platform tools for on-chain builds |
-| binaryen (wasm-opt) / cosmwasm-check | 133 / 2.2.10 |
+| Tool                                 | Version                                                                   |
+| ------------------------------------ | ------------------------------------------------------------------------- |
+| Flutter / Dart                       | 3.47.6 / 3.13.5                                                           |
+| Foundry / Solidity                   | 1.8.4 / 0.8.37                                                            |
+| Anchor / Agave (Solana CLI)          | 1.2.0 / 4.3.0                                                             |
+| Sui CLI                              | 1.81.0                                                                    |
+| osmosisd                             | 31.0.3                                                                    |
+| near-cli-rs / cargo-near             | 0.30.1 / 0.22.0                                                           |
+| Rust                                 | 1.97 (host), 1.86 for CosmWasm, Solana platform tools for on-chain builds |
+| binaryen (wasm-opt) / cosmwasm-check | 133 / 2.2.10                                                              |
+
+## Publish
+
+Nothing publishes automatically. Run these by hand and record each run in `DEPLOYS.md`:
+
+```bash
+scripts/deploy-pages.sh   # builds the web app and pushes it to the gh-pages branch
+scripts/release-apk.sh    # builds the APK and creates a GitHub Release (needs the gh CLI)
+```

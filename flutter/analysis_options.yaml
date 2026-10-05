@@ -9,3 +9,10 @@ analyzer:
     - windows/**
     - macos/**
     - linux/**
+
+linter:
+  rules:
+    lines_longer_than_80_chars: false
+
+formatter:
+  page_width: 120

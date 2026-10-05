@@ -1,0 +1,8 @@
+<!-- Android Studio, with the repository root open: runs the app. Pick the
+     device in the toolbar. -->
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="main.dart" type="FlutterRunConfigurationType" factoryName="Flutter">
+    <option name="filePath" value="$PROJECT_DIR$/flutter/lib/main.dart" />
+    <method v="2" />
+  </configuration>
+</component>

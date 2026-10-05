@@ -1,0 +1,7 @@
+{
+  // VS Code suggests these when you open this folder.
+  "recommendations": [
+    // Runs, debugs, and tests the Flutter app.
+    "Dart-Code.flutter"
+  ]
+}

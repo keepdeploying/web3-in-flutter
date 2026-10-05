@@ -2,17 +2,34 @@
   "evm": {
     "counter": "0x49f5A4DD302f5BA6F3414c7827428dbBe8E8D16d",
     "networks": {
-      "sepolia": { "chainId": 11155111, "deployBlock": 11851094 },
-      "baseSepolia": { "chainId": 84532, "deployBlock": 47732129 },
-      "polygonAmoy": { "chainId": 80002, "deployBlock": null },
-      "arbitrumSepolia": { "chainId": 421614, "deployBlock": 316132592 }
+      "sepolia": {
+        "chainId": 11155111,
+        "deployBlock": 11851094
+      },
+      "baseSepolia": {
+        "chainId": 84532,
+        "deployBlock": 47732129
+      },
+      "polygonAmoy": {
+        "chainId": 80002,
+        "deployBlock": null
+      },
+      "arbitrumSepolia": {
+        "chainId": 421614,
+        "deployBlock": 316132592
+      }
     }
   },
   "solana": {
-    "devnet": { "programId": "B5FWXqM3hrna9SCPp2r2APzEmaMzash3N6t9kkwpD5qH" }
+    "devnet": {
+      "programId": "B5FWXqM3hrna9SCPp2r2APzEmaMzash3N6t9kkwpD5qH"
+    }
   },
   "sui": {
-    "testnet": { "packageId": null, "registryId": null }
+    "testnet": {
+      "packageId": "0xb6f98f0c980532ceed3411ddc760eff5c41478efa492edc0f25f97bcd74571ff",
+      "registryId": "0x7c325a033dfa67a51aee917f4d52af0d7e438f3c5cef67e2791042dfc8daba18"
+    }
   },
   "cosmwasm": {
     "osmo-test-5": {
@@ -21,6 +38,8 @@
     }
   },
   "near": {
-    "testnet": { "contract": "flutter-counter.testnet" }
+    "testnet": {
+      "contract": "flutter-counter.testnet"
+    }
   }
 }

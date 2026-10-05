@@ -2,13 +2,13 @@
 
 An [Anchor](https://www.anchor-lang.com) 1.2 program, `flutter_counter`, deployed on devnet at `B5FWXqM3hrna9SCPp2r2APzEmaMzash3N6t9kkwpD5qH`.
 
-| Account | Seeds | Holds |
-| --- | --- | --- |
-| `Global` | `["global"]` | `total_users` |
+| Account   | Seeds               | Holds                           |
+| --------- | ------------------- | ------------------------------- |
+| `Global`  | `["global"]`        | `total_users`                   |
 | `Counter` | `["counter", user]` | `user`, `value` (`i64`), `bump` |
 
-| Instruction | What it does |
-| --- | --- |
+| Instruction                       | What it does                |
+| --------------------------------- | --------------------------- |
 | `increment`, `decrement`, `reset` | Change the signer's counter |
 
 All three take the same accounts: `global`, `counter`, `user` (signer, pays rent) and `system_program`.

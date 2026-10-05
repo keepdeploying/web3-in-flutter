@@ -1,0 +1,17 @@
+{
+  // VS Code suggests these when you open the repository.
+  "recommendations": [
+    // Runs, debugs, and tests the Flutter app and the Dart server.
+    "Dart-Code.flutter",
+    // Solidity syntax, formatting and errors for contracts/evm.
+    "NomicFoundation.hardhat-solidity",
+    // Rust for the Solana, CosmWasm and NEAR contracts.
+    "rust-lang.rust-analyzer",
+    // Move for the Sui contract.
+    "mysten.move",
+    // TOML files: foundry.toml, Anchor.toml, Cargo.toml, Move.toml.
+    "tamasfe.even-better-toml",
+    // Formats Markdown and JSON with the repository's .prettierrc.json.
+    "esbenp.prettier-vscode"
+  ]
+}

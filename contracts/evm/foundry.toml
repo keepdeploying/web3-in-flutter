@@ -23,6 +23,9 @@ remappings_regenerate = true
 remappings_version = false
 remappings_location = "txt"
 
+[fmt]
+line_length = 120
+
 [rpc_endpoints]
 sepolia = "https://sepolia.gateway.tenderly.co"
 base_sepolia = "https://sepolia.base.org"

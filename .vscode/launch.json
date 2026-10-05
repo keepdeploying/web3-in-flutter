@@ -1,0 +1,76 @@
+{
+  // Run and debug configurations for VS Code. Pick one in the Run and Debug
+  // view (Ctrl/Cmd + Shift + D), then press F5.
+  //
+  // They need the Flutter extension (Dart-Code.flutter). VS Code offers to
+  // install it when you open this folder (see extensions.json). Choose the
+  // device (phone, emulator, desktop, or Chrome) in the status bar.
+  //
+  // Run `dart run tool/setup_platforms.dart` once first, from the repository
+  // root, to generate the platform folders.
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Flutter",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "flutter",
+      "program": "lib/main.dart"
+    },
+    {
+      "name": "Flutter (profile mode)",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "flutter",
+      "program": "lib/main.dart",
+      // Profile mode runs at release speed, but keeps DevTools.
+      "flutterMode": "profile"
+    },
+    {
+      "name": "Flutter (release mode)",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "flutter",
+      "program": "lib/main.dart",
+      "flutterMode": "release"
+    },
+    {
+      "name": "Flutter on Chrome",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "flutter",
+      "program": "lib/main.dart",
+      "deviceId": "chrome"
+    },
+    {
+      "name": "Flutter tests",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "flutter",
+      "program": "test/"
+    },
+    {
+      "name": "Server",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "server",
+      // Listens on http://localhost:8080. Set the app's backend to HTTP to use it.
+      "program": "bin/server.dart"
+    },
+    {
+      "name": "Server tests",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "server",
+      "program": "test/"
+    }
+  ],
+  "compounds": [
+    {
+      // The server and the app together, for testing the HTTP backend.
+      "name": "Server and Flutter",
+      "configurations": ["Server", "Flutter"],
+      "stopAll": true
+    }
+  ]
+}

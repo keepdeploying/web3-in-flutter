@@ -24,9 +24,12 @@ void main() {
     'flutter',
     [
       'create',
-      '--project-name', 'flutter_counter',
-      '--org', 'com.keepdeploying',
-      '--platforms', platforms,
+      '--project-name',
+      'flutter_counter',
+      '--org',
+      'com.keepdeploying',
+      '--platforms',
+      platforms,
       '--empty',
       '.',
     ],
@@ -63,7 +66,8 @@ void patchAndroid() {
     Patch(
       marker: 'android.permission.INTERNET',
       find: '<manifest xmlns:android="http://schemas.android.com/apk/res/android">',
-      replace: '<manifest xmlns:android="http://schemas.android.com/apk/res/android">\n'
+      replace:
+          '<manifest xmlns:android="http://schemas.android.com/apk/res/android">\n'
           '    <uses-permission android:name="android.permission.INTERNET" />',
     ),
     Patch(
@@ -121,7 +125,8 @@ void patchMacos() {
     Patch(
       marker: 'com.apple.security.network.client',
       find: '<key>com.apple.security.app-sandbox</key>\n\t<true/>',
-      replace: '<key>com.apple.security.app-sandbox</key>\n\t<true/>\n'
+      replace:
+          '<key>com.apple.security.app-sandbox</key>\n\t<true/>\n'
           '\t<key>com.apple.security.network.client</key>\n\t<true/>',
     ),
   ]);
@@ -129,27 +134,17 @@ void patchMacos() {
     Patch(
       marker: 'com.apple.security.network.client',
       find: '<key>com.apple.security.app-sandbox</key>\n\t<true/>',
-      replace: '<key>com.apple.security.app-sandbox</key>\n\t<true/>\n'
+      replace:
+          '<key>com.apple.security.app-sandbox</key>\n\t<true/>\n'
           '\t<key>com.apple.security.network.client</key>\n\t<true/>',
     ),
   ]);
 }
 
 void patchDesktopTitles() {
-  edit('windows/runner/main.cpp', [
-    Patch(
-      marker: 'L"$appName"',
-      find: 'L"flutter_counter"',
-      replace: 'L"$appName"',
-    ),
-  ]);
+  edit('windows/runner/main.cpp', [Patch(marker: 'L"$appName"', find: 'L"flutter_counter"', replace: 'L"$appName"')]);
   edit('linux/runner/my_application.cc', [
-    Patch(
-      marker: '"$appName"',
-      find: '"flutter_counter"',
-      replace: '"$appName"',
-      all: true,
-    ),
+    Patch(marker: '"$appName"', find: '"flutter_counter"', replace: '"$appName"', all: true),
   ]);
 }
 
@@ -179,8 +174,10 @@ void edit(String relativePath, List<Patch> patches) {
     if (text.contains(p.marker)) continue;
     final target = [p.find, ...p.findAlternatives].firstWhere(
       text.contains,
-      orElse: () => fail('Could not patch $relativePath: expected to find\n${p.find}\n'
-          'The Flutter template may have changed. Apply the change by hand.'),
+      orElse: () => fail(
+        'Could not patch $relativePath: expected to find\n${p.find}\n'
+        'The Flutter template may have changed. Apply the change by hand.',
+      ),
     );
     text = p.all ? text.replaceAll(target, p.replace) : text.replaceFirst(target, p.replace);
   }

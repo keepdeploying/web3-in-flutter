@@ -7,11 +7,11 @@ A Move package with one module, `flutter_counter::counter`. Publishing it create
 
 **Move has no signed integers**, so a counter is stored as a `Value { negative: bool, magnitude: u64 }`. Zero is never negative.
 
-| Function | What it does |
-| --- | --- |
-| `increment(registry)`, `decrement(registry)`, `reset(registry)` | Change the sender's counter |
-| `value_of(registry, user)` | Returns `(negative, magnitude)` |
-| `total_users(registry)`, `is_user(registry, user)` | Reads |
+| Function                                                        | What it does                    |
+| --------------------------------------------------------------- | ------------------------------- |
+| `increment(registry)`, `decrement(registry)`, `reset(registry)` | Change the sender's counter     |
+| `value_of(registry, user)`                                      | Returns `(negative, magnitude)` |
+| `total_users(registry)`, `is_user(registry, user)`              | Reads                           |
 
 Events: `UserRegistered` and `CounterChanged`.
 

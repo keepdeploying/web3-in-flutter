@@ -1,0 +1,9 @@
+<!-- Android Studio, with the repository root open: runs the Dart server on
+     http://localhost:8080. -->
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="server" type="DartCommandLineRunConfigurationType" factoryName="Dart Command Line Application">
+    <option name="filePath" value="$PROJECT_DIR$/server/bin/server.dart" />
+    <option name="workingDirectory" value="$PROJECT_DIR$/server" />
+    <method v="2" />
+  </configuration>
+</component>

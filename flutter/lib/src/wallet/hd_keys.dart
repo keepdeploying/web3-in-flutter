@@ -48,12 +48,10 @@ class HdKeys {
   static const cosmosHrp = 'osmo';
 
   /// Creates a new random 12-word recovery phrase.
-  static String generateMnemonic() =>
-      Bip39MnemonicGenerator().fromWordsNumber(Bip39WordsNum.wordsNum12).toStr();
+  static String generateMnemonic() => Bip39MnemonicGenerator().fromWordsNumber(Bip39WordsNum.wordsNum12).toStr();
 
   /// Whether [mnemonic] is a valid BIP-39 phrase (word list and checksum).
-  static bool isValidMnemonic(String mnemonic) =>
-      Bip39MnemonicValidator().isValid(_normalize(mnemonic));
+  static bool isValidMnemonic(String mnemonic) => Bip39MnemonicValidator().isValid(_normalize(mnemonic));
 
   /// Turns a recovery phrase into the 64-byte BIP-39 seed.
   static List<int> seedFrom(String mnemonic) =>
@@ -89,13 +87,7 @@ class HdKeys {
           ChainFamily.sui => SuiAddrEncoder().encodeKey(pub),
           _ => NearAddrEncoder().encodeKey(pub),
         };
-        return ChainKey(
-          family: family,
-          path: path,
-          privateKey: node.privateKey.raw,
-          publicKey: pub,
-          address: address,
-        );
+        return ChainKey(family: family, path: path, privateKey: node.privateKey.raw, publicKey: pub, address: address);
     }
   }
 
@@ -105,6 +97,5 @@ class HdKeys {
     return {for (final f in ChainFamily.values) f: derive(seed, f)};
   }
 
-  static String _normalize(String mnemonic) =>
-      mnemonic.trim().toLowerCase().split(RegExp(r'\s+')).join(' ');
+  static String _normalize(String mnemonic) => mnemonic.trim().toLowerCase().split(RegExp(r'\s+')).join(' ');
 }

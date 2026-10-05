@@ -2,11 +2,11 @@
 
 A [near-sdk](https://github.com/near/near-sdk-rs) 5.29 contract. Each account's counter (`i64`) lives in a `LookupMap`, alongside `total_users`. It's deployed on `flutter-counter.testnet`.
 
-| Method | Kind | What it does |
-| --- | --- | --- |
-| `increment()`, `decrement()`, `reset()` | change | Change the caller's counter and return the new value |
-| `get_value({"account_id": "..."})` | view | A counter (0 if the account never called) |
-| `is_user({"account_id": "..."})`, `total_users()` | view | Reads |
+| Method                                            | Kind   | What it does                                         |
+| ------------------------------------------------- | ------ | ---------------------------------------------------- |
+| `increment()`, `decrement()`, `reset()`           | change | Change the caller's counter and return the new value |
+| `get_value({"account_id": "..."})`                | view   | A counter (0 if the account never called)            |
+| `is_user({"account_id": "..."})`, `total_users()` | view   | Reads                                                |
 
 Events follow [NEP-297](https://nomicon.io/Standards/EventsFormat), with standard `flutter_counter` and events `user_registered` and `counter_changed`. They appear in transaction logs as `EVENT_JSON:{...}`.
 

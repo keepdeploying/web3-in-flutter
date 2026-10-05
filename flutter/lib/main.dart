@@ -15,13 +15,8 @@ class FlutterCounterApp extends StatelessWidget {
       title: 'Flutter Counter',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(colorSchemeSeed: Colors.indigo),
-      darkTheme: ThemeData(
-        colorSchemeSeed: Colors.indigo,
-        brightness: Brightness.dark,
-      ),
-      home: const Scaffold(
-        body: Center(child: Text('Flutter Counter')),
-      ),
+      darkTheme: ThemeData(colorSchemeSeed: Colors.indigo, brightness: Brightness.dark),
+      home: const Scaffold(body: Center(child: Text('Flutter Counter'))),
     );
   }
 }

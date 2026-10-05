@@ -12,9 +12,8 @@ contract Deploy is Script {
     bytes32 constant SALT = keccak256("web3-in-flutter.FlutterCounter.v1");
 
     function run() external returns (FlutterCounter counter) {
-        address predicted = vm.computeCreate2Address(
-            SALT, keccak256(type(FlutterCounter).creationCode), CREATE2_FACTORY
-        );
+        address predicted =
+            vm.computeCreate2Address(SALT, keccak256(type(FlutterCounter).creationCode), CREATE2_FACTORY);
         console.log("Predicted address:", predicted);
 
         if (predicted.code.length > 0) {

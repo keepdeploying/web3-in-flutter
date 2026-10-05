@@ -8,8 +8,16 @@
 *.iml
 *.ipr
 *.iws
-.idea/
-.vscode/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/launch.json
+flutter/.vscode/*
+!flutter/.vscode/extensions.json
+!flutter/.vscode/launch.json
+# Android Studio / IntelliJ project settings, except the shared run
+# configurations (see .idea/runConfigurations).
+.idea/*
+!.idea/runConfigurations/
 .history
 
 # Dart and Flutter
