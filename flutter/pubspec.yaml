@@ -12,6 +12,7 @@ dependencies:
   flutter:
     sdk: flutter
   blockchain_utils: ^7.1.0
+  url_launcher: ^6.3.3
 
 dev_dependencies:
   flutter_test:
@@ -20,3 +21,11 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  # Roboto Mono (SIL Open Font License, see assets/fonts/RobotoMono-OFL.txt),
+  # for addresses, hashes and signed messages. Bundled so it looks the same
+  # on every platform, including the web.
+  fonts:
+    - family: RobotoMono
+      fonts:
+        - asset: assets/fonts/RobotoMono.ttf

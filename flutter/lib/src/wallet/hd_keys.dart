@@ -1,8 +1,8 @@
 import 'package:blockchain_utils/blockchain_utils.dart';
 
-/// The chain families Flutter Counter supports. Every EVM network shares one
-/// family, because they all use the same key and address.
-enum ChainFamily { evm, solana, sui, cosmos, near }
+import '../chains/chain_family.dart';
+
+export '../chains/chain_family.dart';
 
 /// A key pair derived from a recovery phrase for one chain family.
 class ChainKey {

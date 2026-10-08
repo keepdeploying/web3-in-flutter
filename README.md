@@ -31,7 +31,7 @@ One Flutter app, **Flutter Counter**, that proves Flutter can be a complete Web3
 | `contracts/` | The counter contract for each chain, and `deployments.json` with every address |
 | `keys/`      | Public testnet keys: the dev recovery phrase and the Android debug keystore    |
 | `scripts/`   | Publish the web app to GitHub Pages and the APK to GitHub Releases             |
-| `tool/`      | Dart tools, like `setup_platforms.dart`                                        |
+| `tool/`      | Dart tools: `setup_platforms.dart` and `sync_deployments.dart`                 |
 | `DEPLOYS.md` | Log of every contract deploy, web deploy and APK release                       |
 
 The repo commits only source code and the files that declare dependencies. Platform folders (`flutter/android/`, `flutter/ios/`, and so on), build output and downloaded dependencies are generated on your machine.

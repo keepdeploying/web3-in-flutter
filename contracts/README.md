@@ -31,6 +31,13 @@ Every deploy script needs the network named explicitly, so nothing goes to a rea
 ./near/deploy.sh testnet
 ```
 
-Each script runs the tests first, then deploys with the public dev wallet and prints the address or ID. Deployed addresses go in `deployments.json`, which the app reads, and in `../DEPLOYS.md`.
+Each script runs the tests first, then deploys with the public dev wallet and prints the address or ID.
+
+After a deploy, update `deployments.json`, then regenerate the Dart constants the app imports:
+
+````bash
+dart run tool/sync_deployments.dart   # from the repo root
+``` Deployed addresses go in `deployments.json`, which the app reads, and in `../DEPLOYS.md`.
 
 The deployer on every chain is the dev account from `../keys/dev-mnemonic.txt`.
+````
