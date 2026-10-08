@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../chains/chain_family.dart';
+import '../chains/counter_reader.dart';
 import '../chains/networks.dart';
 import '../state/app_state.dart';
 import '../ui/theme.dart';
@@ -10,11 +10,11 @@ import '../ui/widgets/shimmer.dart';
 import '../ui/widgets/whats_happening.dart';
 import 'home_shell.dart';
 
-/// Reads public data from the selected network: the counter's totals and
-/// recent activity, and (once a wallet is set up) your balance and counter.
+/// Reads public data from the selected network: the counter's total users
+/// and recent activity, plus any account's balance and counter.
 ///
-/// For now (milestone M4) the numbers are placeholders, loaded after a short
-/// delay so the loading skeletons show. M5 replaces them with real reads.
+/// None of this needs a wallet. Blockchain data is public: anyone can read
+/// any account, for free, through an RPC endpoint.
 class ReadScreen extends StatefulWidget {
   const ReadScreen({super.key, required this.onSetUpWallet});
 
@@ -25,16 +25,133 @@ class ReadScreen extends StatefulWidget {
 }
 
 class _ReadScreenState extends State<ReadScreen> {
-  Network? loadedFor;
-  Future<_DemoReads>? reads;
+  Network? network;
+  final lookup = TextEditingController();
+
+  int? totalUsers;
+  List<CounterActivity>? activity;
+  Object? publicError;
+
+  String? account;
+  BigInt? balance;
+  UserCounter? counter;
+  Object? accountError;
+  bool accountLoading = false;
+
+  List<HappeningStep> steps = [];
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final network = AppScope.of(context).network;
-    if (network != loadedFor) {
-      loadedFor = network;
-      reads = _DemoReads.load(network);
+    final selected = AppScope.of(context).network;
+    if (selected != network) {
+      network = selected;
+      lookup.clear();
+      account = null;
+      balance = null;
+      counter = null;
+      accountError = null;
+      loadPublic();
+    }
+  }
+
+  @override
+  void dispose() {
+    lookup.dispose();
+    super.dispose();
+  }
+
+  CounterReader get reader => AppScope.of(context).services.reader(network!);
+
+  /// Runs one read and records it as a step in the "What's happening" card:
+  /// what was asked, which endpoint answered and how long it took.
+  Future<T> step<T>(String title, String explanation, Future<T> Function() read) async {
+    final pool = AppScope.of(context).services.pool(network!);
+    final started = HappeningStep(title: title, detail: explanation, status: StepStatus.active);
+    setState(() => steps = [...steps, started]);
+    final watch = Stopwatch()..start();
+    try {
+      final result = await read();
+      final host = pool.lastUsed?.host;
+      _replaceStep(
+        started,
+        started.copyWith(
+          status: StepStatus.done,
+          detail: '$explanation\nAnswered by $host in ${watch.elapsedMilliseconds} ms.',
+        ),
+      );
+      return result;
+    } catch (e) {
+      _replaceStep(started, started.copyWith(status: StepStatus.failed, detail: '$explanation\nFailed: $e'));
+      rethrow;
+    }
+  }
+
+  /// Swaps one step for its finished version. Steps from an older load,
+  /// already cleared, are ignored.
+  void _replaceStep(HappeningStep old, HappeningStep updated) {
+    if (!mounted) return;
+    setState(() => steps = [for (final s in steps) identical(s, old) ? updated : s]);
+  }
+
+  Future<void> loadPublic() async {
+    final current = network!;
+    setState(() {
+      totalUsers = null;
+      activity = null;
+      publicError = null;
+      steps = [];
+    });
+    try {
+      final results = await Future.wait([
+        step('Read total users', reader.howTotalUsersIsRead, reader.totalUsers),
+        step('Read recent activity', reader.howActivityIsRead, reader.recentActivity),
+      ]);
+      if (!mounted || current != network) return;
+      setState(() {
+        totalUsers = results[0] as int;
+        activity = results[1] as List<CounterActivity>;
+      });
+    } catch (e) {
+      if (mounted && current == network) setState(() => publicError = e);
+    }
+  }
+
+  Future<void> loadAccount(String address) async {
+    final value = address.trim();
+    if (!reader.isValidAddress(value)) {
+      setState(() => accountError = 'That is not a valid ${network!.family.label} address.');
+      return;
+    }
+    lookup.text = value;
+    final current = network!;
+    setState(() {
+      account = value;
+      accountLoading = true;
+      accountError = null;
+    });
+    try {
+      final results = await Future.wait([
+        step(
+          'Read the balance',
+          'The native ${network!.symbol} balance of ${shortAddress(value)}.',
+          () => reader.balance(value),
+        ),
+        step(
+          "Read the account's counter",
+          'The counter value stored for ${shortAddress(value)}.',
+          () => reader.userCounter(value),
+        ),
+      ]);
+      if (!mounted || current != network) return;
+      setState(() {
+        balance = results[0] as BigInt;
+        counter = results[1] as UserCounter;
+      });
+    } catch (e) {
+      if (mounted) setState(() => accountError = e);
+    } finally {
+      if (mounted) setState(() => accountLoading = false);
     }
   }
 
@@ -42,99 +159,142 @@ class _ReadScreenState extends State<ReadScreen> {
   Widget build(BuildContext context) {
     final network = AppScope.of(context).network;
     final accent = accentOf(network);
+    final theme = Theme.of(context);
 
-    return FutureBuilder<_DemoReads>(
-      future: reads,
-      builder: (context, snapshot) {
-        final data = snapshot.data;
-        return ScreenList(
-          children: [
-            const DemoBanner(),
-            GlassCard(
-              accent: accent,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  CardHeader(title: 'Your account', icon: Icons.account_balance_wallet_outlined),
-                  const Text('Set up a wallet to see your balance and your own counter on this network.'),
-                  const SizedBox(height: 12),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: FilledButton.tonalIcon(
-                      onPressed: widget.onSetUpWallet,
-                      icon: const Icon(Icons.key),
-                      label: const Text('Set up a wallet'),
+    return RefreshIndicator(
+      onRefresh: () async {
+        await loadPublic();
+        if (account != null) await loadAccount(account!);
+      },
+      child: ScreenList(
+        children: [
+          GlassCard(
+            accent: accent,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const CardHeader(title: 'Look up an account', icon: Icons.account_balance_wallet_outlined),
+                Text(
+                  'Reading needs no wallet: paste any ${network.family.label} address, or tap someone in the activity below.',
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: lookup,
+                  style: monoStyle(context, size: 13),
+                  decoration: InputDecoration(
+                    hintText: _hint(network),
+                    border: const OutlineInputBorder(),
+                    isDense: true,
+                    suffixIcon: IconButton(
+                      tooltip: 'Look up',
+                      icon: const Icon(Icons.search),
+                      onPressed: () => loadAccount(lookup.text),
                     ),
                   ),
-                ],
-              ),
-            ),
-            GlassCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  CardHeader(
-                    title: 'The counter on ${network.name}',
-                    icon: Icons.exposure,
-                    trailing: IconButton(
-                      tooltip: 'Open the contract in the explorer',
-                      icon: const Icon(Icons.open_in_new, size: 20),
-                      onPressed: () => launchUrl(Uri.parse(network.addressUrl(network.counter))),
-                    ),
+                  onSubmitted: loadAccount,
+                ),
+                if (accountError != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text('$accountError', style: TextStyle(color: theme.colorScheme.error)),
                   ),
+                if (account != null && accountError == null) ...[
+                  const SizedBox(height: 16),
                   Wrap(
                     spacing: 32,
                     runSpacing: 16,
                     children: [
-                      _Stat(label: 'Total users', value: data?.totalUsers.toString()),
-                      _Stat(label: 'Changes today', value: data?.changesToday.toString()),
+                      _Stat(
+                        label: 'Balance',
+                        value: balance == null ? null : '${formatUnits(balance!, network.decimals)} ${network.symbol}',
+                      ),
+                      _Stat(
+                        label: 'Their counter',
+                        value: counter == null ? null : '${counter!.value}${counter!.isUser ? '' : ' (never used)'}',
+                      ),
                     ],
                   ),
-                  const SizedBox(height: 16),
-                  Text('Contract', style: Theme.of(context).textTheme.labelMedium),
-                  const SizedBox(height: 4),
-                  SelectableText(network.counter, style: monoStyle(context, size: 13)),
+                  TextButton.icon(
+                    style: TextButton.styleFrom(padding: EdgeInsets.zero),
+                    onPressed: () => launchUrl(Uri.parse(network.addressUrl(account!))),
+                    icon: const Icon(Icons.open_in_new, size: 16),
+                    label: const Text('View the account on the explorer'),
+                  ),
                 ],
-              ),
-            ),
-            GlassCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const CardHeader(title: 'Recent activity', icon: Icons.history),
-                  if (data == null)
-                    for (var i = 0; i < 4; i++) const _ActivityRow.loading()
-                  else
-                    for (final activity in data.activity) _ActivityRow(activity: activity),
-                ],
-              ),
-            ),
-            WhatsHappeningCard(
-              steps: [
-                HappeningStep(
-                  title: 'Connected to ${Uri.parse(network.rpcUrls.first).host}',
-                  detail: 'The first of ${network.rpcUrls.length} free endpoints for ${network.name}.',
-                  status: data == null ? StepStatus.active : StepStatus.done,
-                ),
-                HappeningStep(
-                  title: 'Read the counter totals',
-                  detail: _readExplanation(network),
-                  status: data == null ? StepStatus.pending : StepStatus.done,
+                const SizedBox(height: 4),
+                TextButton.icon(
+                  style: TextButton.styleFrom(padding: EdgeInsets.zero),
+                  onPressed: widget.onSetUpWallet,
+                  icon: const Icon(Icons.key, size: 16),
+                  label: const Text('Or set up your own wallet'),
                 ),
               ],
             ),
-          ],
-        );
-      },
+          ),
+          GlassCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CardHeader(
+                  title: 'The counter on ${network.name}',
+                  icon: Icons.exposure,
+                  trailing: IconButton(
+                    tooltip: 'Open the contract in the explorer',
+                    icon: const Icon(Icons.open_in_new, size: 20),
+                    onPressed: () => launchUrl(Uri.parse(network.addressUrl(network.counter))),
+                  ),
+                ),
+                if (publicError != null)
+                  _ErrorRow(error: publicError!, onRetry: loadPublic)
+                else
+                  Wrap(
+                    spacing: 32,
+                    runSpacing: 16,
+                    children: [
+                      _Stat(label: 'Total users', value: totalUsers?.toString()),
+                      _Stat(label: 'Last change', value: activity == null ? null : _lastChange()),
+                    ],
+                  ),
+                const SizedBox(height: 16),
+                Text('Contract', style: theme.textTheme.labelMedium),
+                const SizedBox(height: 4),
+                SelectableText(network.counter, style: monoStyle(context, size: 13)),
+              ],
+            ),
+          ),
+          GlassCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const CardHeader(title: 'Recent activity', icon: Icons.history),
+                if (activity == null && publicError == null)
+                  for (var i = 0; i < 3; i++) const _ActivityRow.loading()
+                else if (activity != null && activity!.isEmpty)
+                  const Text('No counter changes found recently. Be the first in the Write tab.')
+                else if (activity != null)
+                  for (final a in activity!)
+                    _ActivityRow(
+                      activity: a,
+                      onTap: () => loadAccount(a.user),
+                      onOpenTx: () => launchUrl(Uri.parse(network.txUrl(a.txId))),
+                    ),
+              ],
+            ),
+          ),
+          WhatsHappeningCard(steps: steps),
+        ],
+      ),
     );
   }
 
-  String _readExplanation(Network network) => switch (network.family) {
-    ChainFamily.evm => 'An eth_call to totalUsers() on the counter contract. Reads are free: no wallet, no gas.',
-    ChainFamily.solana => 'Fetched the Global account (PDA "global") and decoded its total_users field.',
-    ChainFamily.sui => 'Asked Sui GraphQL for the shared Registry object and read total_users.',
-    ChainFamily.cosmos => 'A smart query {"total_users":{}} to the CosmWasm contract over the REST API.',
-    ChainFamily.near => 'A view call to total_users() on the NEAR contract.',
+  String _lastChange() => activity!.isEmpty ? 'none yet' : timeAgo(activity!.first.time);
+
+  static String _hint(Network network) => switch (network.family.name) {
+    'evm' => '0x... (20 bytes)',
+    'solana' => 'Base58 address',
+    'sui' => '0x... (32 bytes)',
+    'cosmos' => 'osmo1...',
+    _ => 'name.testnet or a 64-character implicit account',
   };
 }
 
@@ -153,85 +313,95 @@ class _Stat extends StatelessWidget {
         Text(label, style: theme.textTheme.labelMedium),
         const SizedBox(height: 6),
         value == null
-            ? const Shimmer(width: 64, height: 32)
-            : Text(value!, style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w700)),
+            ? const Shimmer(width: 96, height: 32)
+            : Text(value!, style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700)),
+      ],
+    );
+  }
+}
+
+class _ErrorRow extends StatelessWidget {
+  const _ErrorRow({required this.error, required this.onRetry});
+
+  final Object error;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Row(
+      children: [
+        Icon(Icons.cloud_off, color: scheme.error),
+        const SizedBox(width: 8),
+        Expanded(child: Text('Could not read the network: $error')),
+        TextButton(onPressed: onRetry, child: const Text('Retry')),
       ],
     );
   }
 }
 
 class _ActivityRow extends StatelessWidget {
-  const _ActivityRow({required this.activity});
-  const _ActivityRow.loading() : activity = null;
+  const _ActivityRow({required this.activity, this.onTap, this.onOpenTx});
+  const _ActivityRow.loading() : activity = null, onTap = null, onOpenTx = null;
 
-  final _DemoActivity? activity;
+  final CounterActivity? activity;
+  final VoidCallback? onTap;
+  final VoidCallback? onOpenTx;
 
   @override
   Widget build(BuildContext context) {
     final a = activity;
     final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          a == null
-              ? const Shimmer(width: 36, height: 36, radius: 18)
-              : CircleAvatar(
-                  radius: 18,
-                  backgroundColor: theme.colorScheme.primaryContainer,
-                  child: Icon(a.icon, size: 18, color: theme.colorScheme.onPrimaryContainer),
-                ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: a == null
-                ? const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [Shimmer(width: 160), SizedBox(height: 6), Shimmer(width: 100, height: 12)],
-                  )
-                : Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('${shortAddress(a.user)} ${a.verb}', style: theme.textTheme.bodyLarge),
-                      Text('${a.from} → ${a.to} · ${a.ago}', style: theme.textTheme.bodySmall),
-                    ],
-                  ),
-          ),
-        ],
+    if (a == null) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          children: [
+            Shimmer(width: 36, height: 36, radius: 18),
+            SizedBox(width: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [Shimmer(width: 160), SizedBox(height: 6), Shimmer(width: 100, height: 12)],
+            ),
+          ],
+        ),
+      );
+    }
+    final icon = switch (a.action) {
+      CounterAction.increment => Icons.add,
+      CounterAction.decrement => Icons.remove,
+      CounterAction.reset => Icons.restart_alt,
+    };
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 18,
+              backgroundColor: theme.colorScheme.primaryContainer,
+              child: Icon(icon, size: 18, color: theme.colorScheme.onPrimaryContainer),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('${shortAddress(a.user)} ${a.action.pastTense}', style: theme.textTheme.bodyLarge),
+                  Text('${a.oldValue} → ${a.newValue} · ${timeAgo(a.time)}', style: theme.textTheme.bodySmall),
+                ],
+              ),
+            ),
+            IconButton(
+              tooltip: 'View the transaction',
+              icon: const Icon(Icons.open_in_new, size: 18),
+              onPressed: onOpenTx,
+            ),
+          ],
+        ),
       ),
     );
   }
-}
-
-/// Placeholder data for the M4 design preview.
-class _DemoReads {
-  const _DemoReads({required this.totalUsers, required this.changesToday, required this.activity});
-
-  final int totalUsers;
-  final int changesToday;
-  final List<_DemoActivity> activity;
-
-  static Future<_DemoReads> load(Network network) async {
-    await Future<void>.delayed(const Duration(milliseconds: 1200));
-    final seed = network.id.length;
-    return _DemoReads(
-      totalUsers: 3 + seed % 5,
-      changesToday: 7 + seed,
-      activity: const [
-        _DemoActivity('0xfFFAa29e82d5455985a908235536d2cD01aCce47', 'incremented', 4, 5, '2 min ago', Icons.add),
-        _DemoActivity('0x9858EfFD232B4033E47d90003D41EC34EcaEda94', 'decremented', 1, 0, '9 min ago', Icons.remove),
-        _DemoActivity('0x5e93a736d04fbb25737aa40bee40171ef79f65fa', 'reset', 12, 0, '1 hour ago', Icons.restart_alt),
-      ],
-    );
-  }
-}
-
-class _DemoActivity {
-  const _DemoActivity(this.user, this.verb, this.from, this.to, this.ago, this.icon);
-
-  final String user;
-  final String verb;
-  final int from;
-  final int to;
-  final String ago;
-  final IconData icon;
 }

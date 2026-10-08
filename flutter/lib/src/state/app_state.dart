@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../chains/networks.dart';
+import 'services.dart';
 
 /// Where the app sends signed messages for verification.
 enum BackendMode {
@@ -32,6 +33,11 @@ enum SigningLevel {
 /// It's a plain [ChangeNotifier]: widgets that read it rebuild when it calls
 /// [notifyListeners]. No state-management package needed.
 class AppState extends ChangeNotifier {
+  AppState({ChainServices? services}) : services = services ?? ChainServices();
+
+  /// The RPC pools and counter readers for every network.
+  final ChainServices services;
+
   Network _network = Networks.sepolia;
   ThemeMode _themeMode = ThemeMode.system;
   BackendMode _backendMode = BackendMode.local;

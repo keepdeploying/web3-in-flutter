@@ -60,3 +60,13 @@ String shortAddress(String value, {int head = 6, int tail = 4}) {
   if (value.length <= head + tail + 3) return value;
   return '${value.substring(0, head)}...${value.substring(value.length - tail)}';
 }
+
+/// "just now", "5 min ago", "3 h ago", "2 d ago".
+String timeAgo(DateTime? time, {DateTime? now}) {
+  if (time == null) return '';
+  final diff = (now ?? DateTime.now()).difference(time);
+  if (diff.inSeconds < 60) return 'just now';
+  if (diff.inMinutes < 60) return '${diff.inMinutes} min ago';
+  if (diff.inHours < 24) return '${diff.inHours} h ago';
+  return '${diff.inDays} d ago';
+}
