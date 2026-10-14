@@ -120,10 +120,7 @@ class OsmosisWriter extends CounterWriter {
 
   /// AuthInfo: who signs (public key, sign mode, sequence) and the fee.
   static List<int> _authInfo(CosmosDirectSigner signer, int sequence, {required int gas, required int fee}) {
-    final publicKey = Proto.any(
-      '/cosmos.crypto.secp256k1.PubKey',
-      Proto.message([Proto.bytes(1, signer.publicKey)]),
-    );
+    final publicKey = Proto.any('/cosmos.crypto.secp256k1.PubKey', Proto.message([Proto.bytes(1, signer.publicKey)]));
     final signerInfo = Proto.message([
       Proto.bytes(1, publicKey),
       // mode_info.single.mode = SIGN_MODE_DIRECT (1)

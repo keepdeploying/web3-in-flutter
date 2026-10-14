@@ -89,10 +89,7 @@ class StandardWallet extends InstalledWallet {
   @override
   Set<ChainFamily> get families => {
     for (final chain in _wallet.chains.toDart.map((c) => c.toDart))
-      if (chain.startsWith('solana:'))
-        ChainFamily.solana
-      else if (chain.startsWith('sui:'))
-        ChainFamily.sui,
+      if (chain.startsWith('solana:')) ChainFamily.solana else if (chain.startsWith('sui:')) ChainFamily.sui,
   };
 
   /// The feature's object, or null if the wallet doesn't have it.
@@ -115,9 +112,7 @@ class StandardWallet extends InstalledWallet {
     // The wallet asks the user to share their accounts with this site.
     final result = await call('standard:connect', 'connect', null) as JSObject;
     final accounts = result.getProperty<JSArray<WalletAccount>>('accounts'.toJS).toDart;
-    final account = accounts
-        .where((a) => a.chains.toDart.any((c) => c.toDart.startsWith(prefix)))
-        .firstOrNull;
+    final account = accounts.where((a) => a.chains.toDart.any((c) => c.toDart.startsWith(prefix))).firstOrNull;
     if (account == null) throw WalletException('$name shared no ${network.family.label} account.');
 
     // Tell the app when the user switches account or disconnects.

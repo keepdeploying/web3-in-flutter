@@ -128,9 +128,8 @@ class Eip6963Signer extends InstalledSigner implements EvmTransactionSender {
     await _switchTo(network);
     // Only from, to and data: the wallet fills in the nonce, gas and fees.
     return await wallet.request('eth_sendTransaction', [
-          {'from': address, 'to': to, 'data': data},
-        ])
-        as String;
+      {'from': address, 'to': to, 'data': data},
+    ]) as String;
   }
 
   /// Wallets send transactions on the chain they are set to, so switch it

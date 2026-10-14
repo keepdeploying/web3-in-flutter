@@ -151,10 +151,7 @@ class KeplrSigner extends InstalledSigner implements CosmosDirectSigner {
   Future<SignedMessage> signMessage(String message, {List<int>? nearNonce}) async {
     // ADR-36: the wallet wraps the text in an amino sign doc with a
     // MsgSignData, chain ID "" and zero fee, then signs its sha256.
-    final result = await walletCall(
-      wallet.name,
-      () => wallet.api.signArbitrary(chainId, address, message),
-    );
+    final result = await walletCall(wallet.name, () => wallet.api.signArbitrary(chainId, address, message));
     final publicKey = result.getProperty<JSObject>('pub_key'.toJS).getProperty<JSString>('value'.toJS).toDart;
     return SignedMessage(
       family: family,
