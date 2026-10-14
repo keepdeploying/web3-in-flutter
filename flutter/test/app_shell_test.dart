@@ -86,30 +86,17 @@ void main() {
     );
   });
 
-  testWidgets('the sidebar collapses to icons on wide windows only', (tester) async {
+  testWidgets('wide windows keep the rail of icons that tablets have', (tester) async {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
-    tester.view.physicalSize = const Size(1440, 900);
-
-    await tester.pumpWidget(FlutterCounterApp(state: AppState(services: ChainServices(client: fakeChain))));
-    await tester.pump(const Duration(milliseconds: 1500));
-    NavigationRail rail() => tester.widget(find.byType(NavigationRail));
-
-    expect(rail().extended, isTrue);
-    await tester.tap(find.byKey(const Key('rail-toggle')));
-    await tester.pumpAndSettle(const Duration(milliseconds: 100));
-    expect(rail().extended, isFalse);
-    expect(find.byTooltip('Expand the sidebar'), findsOneWidget);
-
-    await tester.tap(find.byKey(const Key('rail-toggle')));
-    await tester.pumpAndSettle(const Duration(milliseconds: 100));
-    expect(rail().extended, isTrue);
-
-    // A tablet-sized window has a rail of icons already, and no toggle.
-    tester.view.physicalSize = const Size(900, 900);
-    await tester.pump(const Duration(milliseconds: 500));
-    expect(rail().extended, isFalse);
-    expect(find.byKey(const Key('rail-toggle')), findsNothing);
+    for (final size in [const Size(900, 900), const Size(1440, 900), const Size(2560, 1440)]) {
+      tester.view.physicalSize = size;
+      await tester.pumpWidget(FlutterCounterApp(state: AppState(services: ChainServices(client: fakeChain))));
+      await tester.pump(const Duration(milliseconds: 500));
+      final rail = tester.widget<NavigationRail>(find.byType(NavigationRail));
+      expect(rail.extended, isFalse, reason: '$size');
+      expect(rail.labelType, NavigationRailLabelType.all, reason: '$size');
+    }
   });
 
   testWidgets('the header picks the theme, and shows labels only when there is room', (tester) async {

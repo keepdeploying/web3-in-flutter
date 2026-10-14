@@ -17,9 +17,8 @@ import 'write_screen.dart';
 /// navigation between the four screens.
 ///
 /// The navigation follows the window size (see [WindowSize]): a glass bar at
-/// the bottom on phones, a rail on the left on tablets, and an extended rail
-/// with labels beside the icons on large windows. On large windows the rail
-/// can also be collapsed to icons, to give the screen more room.
+/// the bottom on phones, and a rail of icons with their labels on the left on
+/// tablets and large windows.
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
 
@@ -29,10 +28,6 @@ class HomeShell extends StatefulWidget {
 
 class _HomeShellState extends State<HomeShell> {
   int index = 0;
-
-  /// Whether the user collapsed the rail. Only large windows extend it, so
-  /// only they offer this.
-  bool railCollapsed = false;
 
   /// The four destinations. The icon is drawn regular, and filled when selected.
   static const destinations = <({IconData icon, IconData selected, String label})>[
@@ -77,13 +72,7 @@ class _HomeShellState extends State<HomeShell> {
             ? SafeArea(bottom: false, child: content)
             : Row(
                 children: [
-                  _GlassRail(
-                    size: size,
-                    index: index,
-                    onSelected: goTo,
-                    collapsed: railCollapsed,
-                    onToggle: () => setState(() => railCollapsed = !railCollapsed),
-                  ),
+                  _GlassRail(index: index, onSelected: goTo),
                   Expanded(child: SafeArea(left: false, child: content)),
                 ],
               ),
@@ -108,27 +97,16 @@ class _HomeShellState extends State<HomeShell> {
   }
 }
 
-/// The navigation rail of tablets and large windows. Expanded windows get
-/// labels beside the icons, the app's name at the top, and a button at the
-/// bottom that collapses the rail to icons and back.
+/// The navigation rail of tablets and large windows: icons with labels
+/// under them, and the app's icon at the top.
 class _GlassRail extends StatelessWidget {
-  const _GlassRail({
-    required this.size,
-    required this.index,
-    required this.onSelected,
-    required this.collapsed,
-    required this.onToggle,
-  });
+  const _GlassRail({required this.index, required this.onSelected});
 
-  final WindowSize size;
   final int index;
   final ValueChanged<int> onSelected;
-  final bool collapsed;
-  final VoidCallback onToggle;
 
   @override
   Widget build(BuildContext context) {
-    final extended = size.isExpanded && !collapsed;
     final short = WindowSize.isShort(context);
     return GlassBar(
       vertical: true,
@@ -144,37 +122,11 @@ class _GlassRail extends StatelessWidget {
                 child: NavigationRail(
                   selectedIndex: index,
                   onDestinationSelected: onSelected,
-                  extended: extended,
-                  minExtendedWidth: 232,
-                  labelType: extended ? NavigationRailLabelType.none : NavigationRailLabelType.all,
+                  labelType: NavigationRailLabelType.all,
                   groupAlignment: -1,
-                  trailingAtBottom: true,
-                  trailing: size.isExpanded
-                      ? Padding(
-                          padding: EdgeInsets.symmetric(vertical: short ? 8 : 16),
-                          child: IconButton(
-                            key: const Key('rail-toggle'),
-                            tooltip: collapsed ? 'Expand the sidebar' : 'Collapse the sidebar',
-                            onPressed: onToggle,
-                            icon: const PhosphorIcon(PhosphorIconsRegular.sidebarSimple),
-                          ),
-                        )
-                      : null,
                   leading: Padding(
                     padding: EdgeInsets.symmetric(vertical: short ? 8 : 16),
-                    child: extended
-                        ? Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const AppIcon(size: 36),
-                              const SizedBox(width: 12),
-                              Text(
-                                'Flutter Counter',
-                                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-                              ),
-                            ],
-                          )
-                        : const AppIcon(size: 40),
+                    child: const AppIcon(size: 40),
                   ),
                   destinations: [
                     for (final d in _HomeShellState.destinations)
@@ -205,8 +157,8 @@ class _TopBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final width = MediaQuery.sizeOf(context).width;
-    // Tiny phones keep the icon and drop the name, so the network chip fits.
-    final showTitle = !size.isExpanded && width >= 360;
+    // Tiny phones keep the icon and drop the name, so the header buttons fit.
+    final showTitle = width >= 360;
     return Padding(
       padding: EdgeInsets.fromLTRB(size.isCompact ? 16 : 24, WindowSize.isShort(context) ? 4 : 12, 16, 4),
       child: Row(

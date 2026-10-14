@@ -28,55 +28,58 @@ class HeaderPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final pill = Semantics(
+    // The pill is a Material with a stadium shape, so the ink ripple stays
+    // inside it.
+    final pill = Material(
+      color: scheme.surface.withValues(alpha: 0.6),
+      shape: StadiumBorder(side: BorderSide(color: scheme.outlineVariant)),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox.square(dimension: 20, child: Center(child: icon)),
+              if (label case final text?) ...[
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    text,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.labelLarge,
+                  ),
+                ),
+              ],
+              const SizedBox(width: 4),
+              PhosphorIcon(PhosphorIconsRegular.caretDown, size: 14, color: scheme.onSurfaceVariant),
+            ],
+          ),
+        ),
+      ),
+    );
+    final button = Semantics(
       button: true,
       label: semanticLabel,
       excludeSemantics: true,
-      child: InkWell(
-        customBorder: const StadiumBorder(),
+      // The pill looks 36 px tall, but a tap a little outside it, within 44
+      // px, still counts.
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onTap: onTap,
         child: ConstrainedBox(
           constraints: BoxConstraints(minHeight: 44, minWidth: 44, maxWidth: maxWidth),
           // widthFactor: shrink to the pill, instead of centering it in the full width.
           child: Center(
             widthFactor: 1,
-            child: AnimatedSize(
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeOut,
-              child: DecoratedBox(
-                decoration: ShapeDecoration(
-                  color: scheme.surface.withValues(alpha: 0.6),
-                  shape: StadiumBorder(side: BorderSide(color: scheme.outlineVariant)),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SizedBox.square(dimension: 20, child: Center(child: icon)),
-                      if (label case final text?) ...[
-                        const SizedBox(width: 8),
-                        Flexible(
-                          child: Text(
-                            text,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.labelLarge,
-                          ),
-                        ),
-                      ],
-                      const SizedBox(width: 4),
-                      PhosphorIcon(PhosphorIconsRegular.caretDown, size: 14, color: scheme.onSurfaceVariant),
-                    ],
-                  ),
-                ),
-              ),
-            ),
+            child: AnimatedSize(duration: const Duration(milliseconds: 200), curve: Curves.easeOut, child: pill),
           ),
         ),
       ),
     );
     // Without a label, a tooltip says what the icon is.
-    return label == null ? Tooltip(message: semanticLabel, child: pill) : pill;
+    return label == null ? Tooltip(message: semanticLabel, child: button) : button;
   }
 }
