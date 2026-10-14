@@ -9,13 +9,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
-/// Answers the EVM reads the Read screen makes, with one counter change.
+/// Answers the EVM reads the Read screen makes, with one counter change and
+/// 1 ETH on every account.
 /// Anything else gets a JSON-RPC error.
 final fakeChain = MockClient((request) async {
   final body = jsonDecode(request.body) as Map<String, dynamic>;
   String word(int value) => value.toRadixString(16).padLeft(64, '0');
   final Object? result = switch (body['method']) {
     'eth_call' => '0x${word(3)}',
+    'eth_getBalance' => '0xde0b6b3a7640000',
     'eth_blockNumber' => '0x${(11851094 + 100).toRadixString(16)}',
     'eth_getLogs' => [
       {
@@ -59,7 +61,8 @@ void main() {
     expect(find.text('3'), findsOneWidget);
     // The one CounterChanged log, decoded: 1 -> 2 by the dev wallet.
     expect(find.textContaining('incremented'), findsOneWidget);
-    expect(find.textContaining('1 → 2'), findsOneWidget);
+    expect(find.text('1'), findsOneWidget);
+    expect(find.textContaining('2 · '), findsOneWidget);
 
     await tester.tap(find.text('Sign in').first);
     await tester.pump(const Duration(milliseconds: 400));
@@ -69,7 +72,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.text('Your counter on Sepolia'), findsOneWidget);
 
-    await tester.tap(find.byType(ActionChip));
+    await tester.tap(find.byKey(const Key('network-chip')));
     await tester.pump(const Duration(milliseconds: 600));
     await tester.ensureVisible(find.text('Solana Devnet'));
     await tester.pump(const Duration(milliseconds: 300));

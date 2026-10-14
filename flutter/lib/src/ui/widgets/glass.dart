@@ -5,6 +5,7 @@ library;
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:phosphor_icons/phosphor_icons.dart';
 
 /// A soft gradient with three large, blurred color blobs.
 ///
@@ -102,8 +103,10 @@ class GlassCard extends StatelessWidget {
         child: DecoratedBox(
           decoration: BoxDecoration(
             borderRadius: radius,
-            color: (dark ? Colors.white : Colors.white).withValues(alpha: dark ? 0.06 : 0.55),
-            border: Border.all(color: Colors.white.withValues(alpha: dark ? 0.12 : 0.7)),
+            // A touch more white in dark mode, so cards stand out from the
+            // dark background and their text keeps its contrast.
+            color: Colors.white.withValues(alpha: dark ? 0.08 : 0.55),
+            border: Border.all(color: Colors.white.withValues(alpha: dark ? 0.14 : 0.7)),
             gradient: accent == null
                 ? null
                 : LinearGradient(
@@ -127,22 +130,111 @@ class GlassCard extends StatelessWidget {
   }
 }
 
+/// A frosted strip for the navigation bar and the navigation rail: the same
+/// blur as [GlassCard], over the colorful background.
+class GlassBar extends StatelessWidget {
+  const GlassBar({super.key, required this.child, this.vertical = false});
+
+  final Widget child;
+
+  /// Whether this is a side rail (a divider on its right) instead of a bottom
+  /// bar (a divider on top).
+  final bool vertical;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final divider = BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.6));
+    return ClipRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: scheme.surface.withValues(alpha: 0.7),
+            border: vertical ? Border(right: divider) : Border(top: divider),
+          ),
+          child: child,
+        ),
+      ),
+    );
+  }
+}
+
+/// Which color family an [IconTile] draws from.
+enum IconTone { primary, tertiary, neutral }
+
+/// An icon on a tinted tile, the one look for every "icon in a box" in the app.
+///
+/// The tile is solid enough to read on a light glass card, and in dark mode it
+/// switches to a dim tile with a bright icon, since a pale tile would glare.
+/// Duotone icons get a faint second layer so they keep their depth.
+class IconTile extends StatelessWidget {
+  const IconTile({
+    super.key,
+    required this.icon,
+    this.size = 32,
+    this.iconSize = 18,
+    this.circle = false,
+    this.tone = IconTone.primary,
+  });
+
+  final IconData icon;
+  final double size;
+  final double iconSize;
+  final bool circle;
+  final IconTone tone;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final dark = scheme.brightness == Brightness.dark;
+    final (container, onContainer, accent) = switch (tone) {
+      IconTone.primary => (scheme.primaryContainer, scheme.onPrimaryContainer, scheme.primary),
+      IconTone.tertiary => (scheme.tertiaryContainer, scheme.onTertiaryContainer, scheme.tertiary),
+      IconTone.neutral => (scheme.surfaceContainerHighest, scheme.onSurface, scheme.onSurface),
+    };
+    final color = dark ? accent : onContainer;
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: circle ? BoxShape.circle : BoxShape.rectangle,
+        borderRadius: circle ? null : BorderRadius.circular(size * 0.3),
+        color: container.withValues(alpha: dark ? 0.45 : 0.9),
+      ),
+      child: PhosphorIcon(
+        icon,
+        size: iconSize,
+        color: color,
+        duotoneSecondaryOpacity: 0.35,
+        duotoneSecondaryColor: color,
+      ),
+    );
+  }
+}
+
 /// A small title above a card's content, with an optional trailing widget.
+///
+/// The [icon] (a duotone one, like `PhosphorIconsDuotone.wallet`) sits in a
+/// soft rounded tile, the same on every card. A [leading] widget, like a
+/// network logo, takes the tile's place.
 class CardHeader extends StatelessWidget {
-  const CardHeader({super.key, required this.title, this.icon, this.trailing});
+  const CardHeader({super.key, required this.title, this.icon, this.leading, this.trailing});
 
   final String title;
   final IconData? icon;
+  final Widget? leading;
   final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final lead = leading ?? (icon == null ? null : IconTile(icon: icon!));
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         children: [
-          if (icon != null) ...[Icon(icon, size: 20, color: theme.colorScheme.primary), const SizedBox(width: 8)],
+          if (lead != null) ...[lead, const SizedBox(width: 10)],
           Expanded(
             child: Text(title, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
           ),

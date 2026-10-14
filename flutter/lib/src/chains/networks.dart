@@ -16,6 +16,7 @@ class Network {
     required this.symbol,
     required this.decimals,
     required this.accent,
+    required this.logo,
     required this.rpcUrls,
     required this.explorerTx,
     required this.explorerAddress,
@@ -45,6 +46,9 @@ class Network {
   /// The network's brand color as an ARGB integer, so this file stays pure
   /// Dart. The UI turns it into a `Color`.
   final int accent;
+
+  /// The asset path of the network's SVG logo.
+  final String logo;
 
   /// Free public endpoints, in the order the app tries them. Every one was
   /// checked for the right chain, a current head and CORS (for Flutter web).
@@ -79,6 +83,7 @@ abstract final class Networks {
     symbol: 'ETH',
     decimals: 18,
     accent: 0xFF627EEA,
+    logo: 'assets/networks/ethereum.svg',
     rpcUrls: [
       'https://sepolia.gateway.tenderly.co',
       'https://rpc.sepolia.ethpandaops.io',
@@ -101,6 +106,7 @@ abstract final class Networks {
     symbol: 'ETH',
     decimals: 18,
     accent: 0xFF0052FF,
+    logo: 'assets/networks/base.svg',
     rpcUrls: [
       'https://sepolia.base.org',
       'https://base-sepolia.gateway.tenderly.co',
@@ -122,6 +128,7 @@ abstract final class Networks {
     symbol: 'ETH',
     decimals: 18,
     accent: 0xFF28A0F0,
+    logo: 'assets/networks/arbitrum.svg',
     rpcUrls: [
       'https://sepolia-rollup.arbitrum.io/rpc',
       'https://arbitrum-sepolia.gateway.tenderly.co',
@@ -142,6 +149,7 @@ abstract final class Networks {
     symbol: 'ETH',
     decimals: 18,
     accent: 0xFFFF0420,
+    logo: 'assets/networks/optimism.svg',
     rpcUrls: [
       'https://sepolia.optimism.io',
       'https://optimism-sepolia-rpc.publicnode.com',
@@ -162,6 +170,7 @@ abstract final class Networks {
     symbol: 'SOL',
     decimals: 9,
     accent: 0xFF9945FF,
+    logo: 'assets/networks/solana.svg',
     rpcUrls: [
       'https://api.devnet.solana.com',
       'https://solana-devnet.gateway.tatum.io',
@@ -181,6 +190,7 @@ abstract final class Networks {
     symbol: 'SUI',
     decimals: 9,
     accent: 0xFF4DA2FF,
+    logo: 'assets/networks/sui.svg',
     rpcUrls: ['https://graphql.testnet.sui.io/graphql'],
     explorerTx: 'https://suiscan.xyz/testnet/tx/{}',
     explorerAddress: 'https://suiscan.xyz/testnet/account/{}',
@@ -196,6 +206,7 @@ abstract final class Networks {
     symbol: 'OSMO',
     decimals: 6,
     accent: 0xFF7B2BF9,
+    logo: 'assets/networks/osmosis.svg',
     rpcUrls: ['https://lcd.osmotest5.osmosis.zone', 'https://lcd.testnet.osmosis.zone'],
     explorerTx: 'https://celatone.osmosis.zone/osmo-test-5/txs/{}',
     explorerAddress: 'https://celatone.osmosis.zone/osmo-test-5/accounts/{}',
@@ -211,6 +222,7 @@ abstract final class Networks {
     symbol: 'NEAR',
     decimals: 24,
     accent: 0xFF00C08B,
+    logo: 'assets/networks/near.svg',
     rpcUrls: [
       'https://test.rpc.fastnear.com',
       'https://testnet-rpc.intea.rs',

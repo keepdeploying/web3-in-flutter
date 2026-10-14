@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_icons/phosphor_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../chains/counter_reader.dart';
 import '../chains/networks.dart';
 import '../state/app_state.dart';
 import '../ui/theme.dart';
+import '../ui/widgets/address_view.dart';
 import '../ui/widgets/glass.dart';
+import '../ui/widgets/network_logo.dart';
+import '../ui/widgets/screen_layout.dart';
 import '../ui/widgets/shimmer.dart';
 import '../ui/widgets/whats_happening.dart';
-import 'home_shell.dart';
 
 /// Reads public data from the selected network: the counter's total users
 /// and recent activity, plus any account's balance and counter.
@@ -166,14 +169,17 @@ class _ReadScreenState extends State<ReadScreen> {
         await loadPublic();
         if (account != null) await loadAccount(account!);
       },
-      child: ScreenList(
+      child: ScreenLayout(
+        title: 'Read the chain',
+        subtitle: 'Blockchain data is public: anyone can read any account, for free.',
+        aside: WhatsHappeningCard(steps: steps),
         children: [
           GlassCard(
             accent: accent,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const CardHeader(title: 'Look up an account', icon: Icons.account_balance_wallet_outlined),
+                const CardHeader(title: 'Look up an account', icon: PhosphorIconsDuotone.wallet),
                 Text(
                   'Reading needs no wallet: paste any ${network.family.label} address, or tap someone in the activity below.',
                 ),
@@ -187,7 +193,7 @@ class _ReadScreenState extends State<ReadScreen> {
                     isDense: true,
                     suffixIcon: IconButton(
                       tooltip: 'Look up',
-                      icon: const Icon(Icons.search),
+                      icon: PhosphorIcon(PhosphorIconsRegular.magnifyingGlass, size: 20),
                       onPressed: () => loadAccount(lookup.text),
                     ),
                   ),
@@ -217,7 +223,7 @@ class _ReadScreenState extends State<ReadScreen> {
                   TextButton.icon(
                     style: TextButton.styleFrom(padding: EdgeInsets.zero),
                     onPressed: () => launchUrl(Uri.parse(network.addressUrl(account!))),
-                    icon: const Icon(Icons.open_in_new, size: 16),
+                    icon: PhosphorIcon(PhosphorIconsRegular.arrowSquareOut, size: 16),
                     label: const Text('View the account on the explorer'),
                   ),
                 ],
@@ -226,14 +232,14 @@ class _ReadScreenState extends State<ReadScreen> {
                   TextButton.icon(
                     style: TextButton.styleFrom(padding: EdgeInsets.zero),
                     onPressed: () => loadAccount(key.address),
-                    icon: const Icon(Icons.person_outline, size: 16),
+                    icon: PhosphorIcon(PhosphorIconsRegular.user, size: 16),
                     label: const Text('Look up my account'),
                   )
                 else
                   TextButton.icon(
                     style: TextButton.styleFrom(padding: EdgeInsets.zero),
                     onPressed: widget.onSetUpWallet,
-                    icon: const Icon(Icons.key, size: 16),
+                    icon: PhosphorIcon(PhosphorIconsRegular.key, size: 16),
                     label: const Text('Or set up your own wallet'),
                   ),
               ],
@@ -243,15 +249,7 @@ class _ReadScreenState extends State<ReadScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                CardHeader(
-                  title: 'The counter on ${network.name}',
-                  icon: Icons.exposure,
-                  trailing: IconButton(
-                    tooltip: 'Open the contract in the explorer',
-                    icon: const Icon(Icons.open_in_new, size: 20),
-                    onPressed: () => launchUrl(Uri.parse(network.addressUrl(network.counter))),
-                  ),
-                ),
+                CardHeader(title: 'The counter on ${network.name}', leading: NetworkLogo(network, size: 32)),
                 if (publicError != null)
                   _ErrorRow(error: publicError!, onRetry: loadPublic)
                 else
@@ -264,9 +262,14 @@ class _ReadScreenState extends State<ReadScreen> {
                     ],
                   ),
                 const SizedBox(height: 16),
-                Text('Contract', style: theme.textTheme.labelMedium),
-                const SizedBox(height: 4),
-                SelectableText(network.counter, style: monoStyle(context, size: 13)),
+                Row(
+                  children: [
+                    PhosphorIcon(PhosphorIconsRegular.fileCode, size: 16, color: theme.colorScheme.onSurfaceVariant),
+                    const SizedBox(width: 6),
+                    Text('Contract', style: theme.textTheme.labelMedium),
+                  ],
+                ),
+                AddressView(address: network.counter, network: network),
               ],
             ),
           ),
@@ -274,7 +277,7 @@ class _ReadScreenState extends State<ReadScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const CardHeader(title: 'Recent activity', icon: Icons.history),
+                const CardHeader(title: 'Recent activity', icon: PhosphorIconsDuotone.clockCounterClockwise),
                 if (activity == null && publicError == null)
                   for (var i = 0; i < 3; i++) const _ActivityRow.loading()
                 else if (activity != null && activity!.isEmpty)
@@ -289,7 +292,6 @@ class _ReadScreenState extends State<ReadScreen> {
               ],
             ),
           ),
-          WhatsHappeningCard(steps: steps),
         ],
       ),
     );
@@ -339,7 +341,7 @@ class _ErrorRow extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     return Row(
       children: [
-        Icon(Icons.cloud_off, color: scheme.error),
+        PhosphorIcon(PhosphorIconsRegular.cloudSlash, color: scheme.error),
         const SizedBox(width: 8),
         Expanded(child: Text('Could not read the network: $error')),
         TextButton(onPressed: onRetry, child: const Text('Retry')),
@@ -375,10 +377,12 @@ class _ActivityRow extends StatelessWidget {
         ),
       );
     }
-    final icon = switch (a.action) {
-      CounterAction.increment => Icons.add,
-      CounterAction.decrement => Icons.remove,
-      CounterAction.reset => Icons.restart_alt,
+    final scheme = theme.colorScheme;
+    final small = theme.textTheme.bodySmall;
+    final (icon, tone) = switch (a.action) {
+      CounterAction.increment => (PhosphorIconsDuotone.plus, IconTone.primary),
+      CounterAction.decrement => (PhosphorIconsDuotone.minus, IconTone.tertiary),
+      CounterAction.reset => (PhosphorIconsDuotone.arrowCounterClockwise, IconTone.neutral),
     };
     return InkWell(
       borderRadius: BorderRadius.circular(12),
@@ -387,24 +391,34 @@ class _ActivityRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 8),
         child: Row(
           children: [
-            CircleAvatar(
-              radius: 18,
-              backgroundColor: theme.colorScheme.primaryContainer,
-              child: Icon(icon, size: 18, color: theme.colorScheme.onPrimaryContainer),
-            ),
+            IconTile(icon: icon, size: 36, circle: true, tone: tone),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('${shortAddress(a.user)} ${a.action.pastTense}', style: theme.textTheme.bodyLarge),
-                  Text('${a.oldValue} → ${a.newValue} · ${timeAgo(a.time)}', style: theme.textTheme.bodySmall),
+                  // The arrow is an icon because the web fonts have no "→" glyph.
+                  Row(
+                    children: [
+                      Text('${a.oldValue}', style: small),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: PhosphorIcon(
+                          PhosphorIconsBold.arrowRight,
+                          size: small?.fontSize ?? 12,
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ),
+                      Flexible(child: Text('${a.newValue} · ${timeAgo(a.time)}', style: small)),
+                    ],
+                  ),
                 ],
               ),
             ),
             IconButton(
               tooltip: 'View the transaction',
-              icon: const Icon(Icons.open_in_new, size: 18),
+              icon: PhosphorIcon(PhosphorIconsRegular.arrowSquareOut, size: 18),
               onPressed: onOpenTx,
             ),
           ],

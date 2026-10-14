@@ -19,14 +19,25 @@ dependencies:
   flutter_secure_storage: ^11.2.0
   local_auth: ^3.0.2
   web: ^1.1.1
+  flutter_svg: ^2.3.0
+  phosphor_icons: ^3.0.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
 
 flutter:
   uses-material-design: true
+
+  assets:
+    # The launcher icon source, also shown in the top bar and the navigation
+    # rail. Linux has no icon generator, so setup_platforms points the window
+    # icon at this copy inside the app bundle.
+    - assets/icon/icon.png
+    # One logo per network, drawn by flutter_svg (see assets/networks/README.md).
+    - assets/networks/
 
   # Roboto Mono (SIL Open Font License, see assets/fonts/RobotoMono-OFL.txt),
   # for addresses, hashes and signed messages. Bundled so it looks the same
@@ -35,3 +46,35 @@ flutter:
     - family: RobotoMono
       fonts:
         - asset: assets/fonts/RobotoMono.ttf
+
+# Launcher icons for every platform, generated from assets/icon/ by
+# `dart run flutter_launcher_icons`, which tool/setup_platforms.dart runs
+# after creating the platform folders. Linux is handled by that script.
+flutter_launcher_icons:
+  # One full-bleed square, no transparency, so iOS can round it itself.
+  image_path: assets/icon/icon.png
+
+  android: true
+  # Adaptive icon: the foreground keeps all art inside the central 66% so
+  # circle, squircle and teardrop masks never clip it.
+  adaptive_icon_background: "#5B5BD6"
+  adaptive_icon_foreground: assets/icon/icon-foreground.png
+  # The foreground art already sits inside the adaptive safe zone, so no extra inset.
+  adaptive_icon_foreground_inset: 0
+
+  ios: true
+  # App Store rejects icons with an alpha channel.
+  remove_alpha_ios: true
+
+  web:
+    generate: true
+    # Same indigo as the app seed color, shown in install dialogs.
+    background_color: "#5B5BD6"
+    theme_color: "#5B5BD6"
+
+  windows:
+    generate: true
+    icon_size: 48
+
+  macos:
+    generate: true

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_icons/phosphor_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'glass.dart';
@@ -46,15 +47,38 @@ class WhatsHappeningCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return GlassCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CardHeader(title: title, icon: Icons.lightbulb_outline),
-          if (steps.isEmpty)
-            Text('Nothing yet. Steps appear here as the app talks to the chain.', style: theme.textTheme.bodyMedium),
+          CardHeader(title: title, icon: PhosphorIconsDuotone.lightbulb),
+          if (steps.isEmpty) const _EmptyState(),
           for (final (i, step) in steps.indexed) _StepRow(step: step, isLast: i == steps.length - 1),
+        ],
+      ),
+    );
+  }
+}
+
+/// What the card shows before anything has happened.
+class _EmptyState extends StatelessWidget {
+  const _EmptyState();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return SizedBox(
+      width: double.infinity,
+      child: Column(
+        children: [
+          const SizedBox(height: 4),
+          const IconTile(icon: PhosphorIconsDuotone.lightbulb, size: 72, iconSize: 40, circle: true),
+          const SizedBox(height: 12),
+          Text(
+            'Nothing yet. Steps appear here as the app talks to the chain.',
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodyMedium,
+          ),
         ],
       ),
     );
@@ -71,11 +95,16 @@ class _StepRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final (icon, color) = switch (step.status) {
-      StepStatus.pending => (Icons.radio_button_unchecked, scheme.outline),
-      StepStatus.active => (Icons.autorenew, scheme.primary),
-      StepStatus.done => (Icons.check_circle, Colors.green),
-      StepStatus.failed => (Icons.error, scheme.error),
+    final icon = switch (step.status) {
+      StepStatus.pending => PhosphorIcon(PhosphorIconsRegular.circle, size: 20, color: scheme.outline),
+      // Not an icon: the spinner shows that something is still going on.
+      StepStatus.active => SizedBox(
+        width: 20,
+        height: 20,
+        child: CircularProgressIndicator(strokeWidth: 2.5, color: scheme.primary),
+      ),
+      StepStatus.done => PhosphorIcon(PhosphorIconsFill.checkCircle, size: 20, color: Colors.green),
+      StepStatus.failed => PhosphorIcon(PhosphorIconsFill.xCircle, size: 20, color: scheme.error),
     };
 
     return IntrinsicHeight(
@@ -84,9 +113,7 @@ class _StepRow extends StatelessWidget {
         children: [
           Column(
             children: [
-              step.status == StepStatus.active
-                  ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.5, color: color))
-                  : Icon(icon, size: 20, color: color),
+              icon,
               if (!isLast) Expanded(child: Container(width: 2, color: scheme.outlineVariant)),
             ],
           ),
@@ -119,9 +146,9 @@ class _StepRow extends StatelessWidget {
                     ),
                   if (step.link != null)
                     TextButton.icon(
-                      style: TextButton.styleFrom(padding: EdgeInsets.zero, visualDensity: VisualDensity.compact),
+                      style: TextButton.styleFrom(padding: EdgeInsets.zero),
                       onPressed: () => launchUrl(step.link!),
-                      icon: const Icon(Icons.open_in_new, size: 16),
+                      icon: PhosphorIcon(PhosphorIconsRegular.arrowSquareOut, size: 16),
                       label: const Text('View on explorer'),
                     ),
                 ],

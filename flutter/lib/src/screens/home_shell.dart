@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_icons/phosphor_icons.dart';
 
 import '../state/app_state.dart';
+import '../ui/layout.dart';
 import '../ui/theme.dart';
+import '../ui/widgets/app_icon.dart';
 import '../ui/widgets/glass.dart';
 import '../ui/widgets/network_picker.dart';
 import 'auth_screen.dart';
@@ -12,9 +15,9 @@ import 'write_screen.dart';
 /// The app's frame: the background, the top bar with the network picker, and
 /// navigation between the four screens.
 ///
-/// On phones the navigation is a bar at the bottom. On wide screens (tablets,
-/// desktop and the web) it moves to a rail on the left, so the content can
-/// use the width.
+/// The navigation follows the window size (see [WindowSize]): a glass bar at
+/// the bottom on phones, a rail on the left on tablets, and an extended rail
+/// with labels beside the icons on large windows.
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
 
@@ -25,11 +28,12 @@ class HomeShell extends StatefulWidget {
 class _HomeShellState extends State<HomeShell> {
   int index = 0;
 
-  static const destinations = [
-    (icon: Icons.travel_explore_outlined, selected: Icons.travel_explore, label: 'Read'),
-    (icon: Icons.key_outlined, selected: Icons.key, label: 'Sign in'),
-    (icon: Icons.edit_note_outlined, selected: Icons.edit_note, label: 'Write'),
-    (icon: Icons.tune_outlined, selected: Icons.tune, label: 'Settings'),
+  /// The four destinations. The icon is drawn regular, and filled when selected.
+  static const destinations = <({IconData icon, IconData selected, String label})>[
+    (icon: PhosphorIconsRegular.magnifyingGlass, selected: PhosphorIconsFill.magnifyingGlass, label: 'Read'),
+    (icon: PhosphorIconsRegular.key, selected: PhosphorIconsFill.key, label: 'Sign in'),
+    (icon: PhosphorIconsRegular.pencilLine, selected: PhosphorIconsFill.pencilLine, label: 'Write'),
+    (icon: PhosphorIconsRegular.slidersHorizontal, selected: PhosphorIconsFill.slidersHorizontal, label: 'Settings'),
   ];
 
   void goTo(int value) => setState(() => index = value);
@@ -37,7 +41,7 @@ class _HomeShellState extends State<HomeShell> {
   @override
   Widget build(BuildContext context) {
     final state = AppScope.of(context);
-    final wide = MediaQuery.sizeOf(context).width >= 840;
+    final size = WindowSize.of(context);
 
     final screen = switch (index) {
       0 => ReadScreen(onSetUpWallet: () => goTo(1)),
@@ -46,126 +50,146 @@ class _HomeShellState extends State<HomeShell> {
       _ => const SettingsScreen(),
     };
 
-    final body = SafeArea(
-      bottom: false,
-      child: Column(
-        children: [
-          _TopBar(),
-          Expanded(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 250),
-              child: KeyedSubtree(key: ValueKey(index), child: screen),
-            ),
+    final content = Column(
+      children: [
+        _TopBar(size: size),
+        Expanded(
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 250),
+            child: KeyedSubtree(key: ValueKey(index), child: screen),
           ),
-        ],
-      ),
+        ),
+      ],
     );
 
     return GlassBackground(
       accent: accentOf(state.network),
       child: Scaffold(
-        body: wide
-            ? Row(
+        // The page scrolls behind the glass bottom bar, so the bar can blur it.
+        extendBody: true,
+        body: size.isCompact
+            ? SafeArea(bottom: false, child: content)
+            : Row(
                 children: [
-                  SafeArea(
-                    child: NavigationRail(
-                      selectedIndex: index,
-                      onDestinationSelected: goTo,
-                      labelType: NavigationRailLabelType.all,
-                      destinations: [
-                        for (final d in destinations)
-                          NavigationRailDestination(
-                            icon: Icon(d.icon),
-                            selectedIcon: Icon(d.selected),
-                            label: Text(d.label),
-                          ),
-                      ],
-                    ),
-                  ),
-                  Expanded(child: body),
-                ],
-              )
-            : body,
-        bottomNavigationBar: wide
-            ? null
-            : NavigationBar(
-                selectedIndex: index,
-                onDestinationSelected: goTo,
-                destinations: [
-                  for (final d in destinations)
-                    NavigationDestination(icon: Icon(d.icon), selectedIcon: Icon(d.selected), label: d.label),
+                  _GlassRail(size: size, index: index, onSelected: goTo),
+                  Expanded(child: SafeArea(left: false, child: content)),
                 ],
               ),
+        bottomNavigationBar: size.isCompact
+            ? GlassBar(
+                child: NavigationBar(
+                  selectedIndex: index,
+                  onDestinationSelected: goTo,
+                  destinations: [
+                    for (final d in destinations)
+                      NavigationDestination(
+                        icon: PhosphorIcon(d.icon),
+                        selectedIcon: PhosphorIcon(d.selected),
+                        label: d.label,
+                      ),
+                  ],
+                ),
+              )
+            : null,
       ),
     );
   }
 }
 
-class _TopBar extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 12, 16, 4),
-      child: Row(
-        children: [
-          Icon(Icons.hub_outlined, color: theme.colorScheme.primary),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              'Flutter Counter',
-              style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          const NetworkPickerButton(),
-        ],
-      ),
-    );
-  }
-}
+/// The navigation rail of tablets and large windows. Expanded windows get
+/// labels beside the icons and the app's name at the top.
+class _GlassRail extends StatelessWidget {
+  const _GlassRail({required this.size, required this.index, required this.onSelected});
 
-/// The scrollable, width-limited column every screen puts its cards in.
-class ScreenList extends StatelessWidget {
-  const ScreenList({super.key, required this.children});
-
-  final List<Widget> children;
+  final WindowSize size;
+  final int index;
+  final ValueChanged<int> onSelected;
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-      children: [
-        Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 720),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                for (final (i, child) in children.indexed) ...[if (i > 0) const SizedBox(height: 16), child],
-              ],
+    final extended = size.isExpanded;
+    final short = WindowSize.isShort(context);
+    return GlassBar(
+      vertical: true,
+      child: SafeArea(
+        right: false,
+        // On a short window (a phone in landscape) the rail scrolls rather than
+        // overflows. The rail needs a height, so it gets at least the viewport's.
+        child: LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: IntrinsicHeight(
+                child: NavigationRail(
+                  selectedIndex: index,
+                  onDestinationSelected: onSelected,
+                  extended: extended,
+                  minExtendedWidth: 232,
+                  labelType: extended ? NavigationRailLabelType.none : NavigationRailLabelType.all,
+                  groupAlignment: -1,
+                  leading: Padding(
+                    padding: EdgeInsets.symmetric(vertical: short ? 8 : 16),
+                    child: extended
+                        ? Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const AppIcon(size: 36),
+                              const SizedBox(width: 12),
+                              Text(
+                                'Flutter Counter',
+                                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                              ),
+                            ],
+                          )
+                        : const AppIcon(size: 40),
+                  ),
+                  destinations: [
+                    for (final d in _HomeShellState.destinations)
+                      NavigationRailDestination(
+                        icon: PhosphorIcon(d.icon),
+                        selectedIcon: PhosphorIcon(d.selected),
+                        label: Text(d.label),
+                      ),
+                  ],
+                ),
+              ),
             ),
           ),
         ),
-      ],
+      ),
     );
   }
 }
 
-/// A short banner that marks data as made up, until the real reads land.
-class DemoBanner extends StatelessWidget {
-  const DemoBanner({super.key});
+/// The strip above every screen: the app's name (on phones and tablets) and
+/// the network picker.
+class _TopBar extends StatelessWidget {
+  const _TopBar({required this.size});
+
+  final WindowSize size;
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return GlassCard(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    final theme = Theme.of(context);
+    final width = MediaQuery.sizeOf(context).width;
+    // Tiny phones keep the icon and drop the name, so the network chip fits.
+    final showTitle = !size.isExpanded && width >= 360;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(size.isCompact ? 16 : 24, WindowSize.isShort(context) ? 4 : 12, 16, 4),
       child: Row(
         children: [
-          Icon(Icons.science_outlined, color: scheme.tertiary),
-          const SizedBox(width: 10),
-          const Expanded(child: Text('Design preview: the numbers on this screen are placeholders.')),
+          if (size.isCompact) ...[const AppIcon(size: 28), const SizedBox(width: 10)],
+          Expanded(
+            child: showTitle
+                ? Text(
+                    'Flutter Counter',
+                    style: theme.textTheme.titleLarge?.copyWith(fontSize: 20, fontWeight: FontWeight.w700),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  )
+                : const SizedBox.shrink(),
+          ),
+          const NetworkPickerButton(),
         ],
       ),
     );

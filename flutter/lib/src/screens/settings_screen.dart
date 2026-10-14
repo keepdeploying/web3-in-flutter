@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_icons/phosphor_icons.dart';
 
 import '../chains/networks.dart';
 import '../rpc/rpc_pool.dart';
 import '../state/app_state.dart';
 import '../ui/theme.dart';
 import '../ui/widgets/glass.dart';
-import '../ui/widgets/network_picker.dart';
-import 'home_shell.dart';
+import '../ui/widgets/network_logo.dart';
+import '../ui/widgets/screen_layout.dart';
 
 /// Appearance, which backend verifies signatures, and the status of every
 /// network's RPC endpoints.
@@ -17,21 +18,47 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final state = AppScope.of(context);
     final theme = Theme.of(context);
-    return ScreenList(
+    return ScreenLayout(
+      title: 'Settings',
+      subtitle: 'Appearance, the backend, and the health of every RPC endpoint.',
       children: [
         GlassCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const CardHeader(title: 'Appearance', icon: Icons.palette_outlined),
-              SegmentedButton<ThemeMode>(
-                segments: const [
-                  ButtonSegment(value: ThemeMode.system, icon: Icon(Icons.brightness_auto), label: Text('System')),
-                  ButtonSegment(value: ThemeMode.light, icon: Icon(Icons.light_mode), label: Text('Light')),
-                  ButtonSegment(value: ThemeMode.dark, icon: Icon(Icons.dark_mode), label: Text('Dark')),
-                ],
-                selected: {state.themeMode},
-                onSelectionChanged: (s) => state.themeMode = s.first,
+              const CardHeader(title: 'Appearance', icon: PhosphorIconsDuotone.palette),
+              // Icons only when there is room, so the labels never wrap. If even the
+              // labels do not fit (large text), the buttons scroll sideways.
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final withIcons = constraints.maxWidth >= 400;
+                  return SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: SegmentedButton<ThemeMode>(
+                      // The fill already shows the selection, and a tick would not fit on a phone.
+                      showSelectedIcon: false,
+                      segments: [
+                        ButtonSegment(
+                          value: ThemeMode.system,
+                          icon: withIcons ? PhosphorIcon(PhosphorIconsRegular.circleHalf, size: 18) : null,
+                          label: const Text('System'),
+                        ),
+                        ButtonSegment(
+                          value: ThemeMode.light,
+                          icon: withIcons ? PhosphorIcon(PhosphorIconsRegular.sun, size: 18) : null,
+                          label: const Text('Light'),
+                        ),
+                        ButtonSegment(
+                          value: ThemeMode.dark,
+                          icon: withIcons ? PhosphorIcon(PhosphorIconsRegular.moon, size: 18) : null,
+                          label: const Text('Dark'),
+                        ),
+                      ],
+                      selected: {state.themeMode},
+                      onSelectionChanged: (s) => state.themeMode = s.first,
+                    ),
+                  );
+                },
               ),
             ],
           ),
@@ -40,14 +67,22 @@ class SettingsScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const CardHeader(title: 'Backend', icon: Icons.dns_outlined),
+              const CardHeader(title: 'Backend', icon: PhosphorIconsDuotone.hardDrives),
               const Text('Where signed messages are verified.'),
               const SizedBox(height: 12),
-              SegmentedButton<BackendMode>(
-                segments: [for (final mode in BackendMode.values) ButtonSegment(value: mode, label: Text(mode.label))],
-                selected: {state.backendMode},
-                onSelectionChanged: (s) => state.backendMode = s.first,
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: SegmentedButton<BackendMode>(
+                  showSelectedIcon: false,
+                  segments: [
+                    for (final mode in BackendMode.values) ButtonSegment(value: mode, label: Text(mode.shortLabel)),
+                  ],
+                  selected: {state.backendMode},
+                  onSelectionChanged: (s) => state.backendMode = s.first,
+                ),
               ),
+              const SizedBox(height: 8),
+              Text(state.backendMode.description, style: theme.textTheme.bodySmall),
               if (state.backendMode == BackendMode.http) ...[
                 const SizedBox(height: 12),
                 TextFormField(
@@ -95,10 +130,20 @@ class _NetworkStatusCardState extends State<NetworkStatusCard> {
         children: [
           CardHeader(
             title: 'Network status',
-            icon: Icons.lan_outlined,
+            icon: PhosphorIconsDuotone.broadcast,
             trailing: checking
-                ? const SizedBox.square(dimension: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                : IconButton(tooltip: 'Check all endpoints', icon: const Icon(Icons.refresh), onPressed: checkAll),
+                // The same 48 px as the button, so the header doesn't jump.
+                ? const SizedBox.square(
+                    dimension: 48,
+                    child: Center(
+                      child: SizedBox.square(dimension: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+                    ),
+                  )
+                : IconButton(
+                    tooltip: 'Check all endpoints',
+                    icon: PhosphorIcon(PhosphorIconsRegular.arrowClockwise, size: 20),
+                    onPressed: checkAll,
+                  ),
           ),
           const Text(
             'The free RPC endpoints the app uses, in the order it tries them. When one fails, times out or rate '
@@ -129,7 +174,7 @@ class _NetworkTile extends StatelessWidget {
         final resting = pool.endpoints.where((e) => e.isCoolingDown(now)).length;
         return ExpansionTile(
           tilePadding: EdgeInsets.zero,
-          leading: NetworkDot(network, size: 12),
+          leading: NetworkLogo(network, size: 28),
           title: Text(network.name),
           subtitle: Text(
             'Using ${active.host}'
@@ -176,10 +221,10 @@ class _EndpointRow extends StatelessWidget {
     final now = DateTime.now();
     final resting = endpoint.isCoolingDown(now);
     final (icon, color) = switch ((active, resting, endpoint.lastSuccess != null)) {
-      (true, _, _) => (Icons.check_circle, scheme.primary),
-      (_, true, _) => (Icons.pause_circle, scheme.error),
-      (_, _, true) => (Icons.check_circle_outline, Colors.green.shade600),
-      _ => (Icons.circle_outlined, scheme.outline),
+      (true, _, _) => (PhosphorIconsFill.checkCircle, scheme.primary),
+      (_, true, _) => (PhosphorIconsRegular.pauseCircle, scheme.error),
+      (_, _, true) => (PhosphorIconsRegular.checkCircle, Colors.green.shade600),
+      _ => (PhosphorIconsRegular.circle, scheme.outline),
     };
     final details = [
       if (endpoint.lastLatency != null) '${endpoint.lastLatency!.inMilliseconds} ms',
@@ -190,7 +235,7 @@ class _EndpointRow extends StatelessWidget {
     return ListTile(
       dense: true,
       contentPadding: EdgeInsets.zero,
-      leading: Icon(icon, size: 18, color: color),
+      leading: PhosphorIcon(icon, size: 18, color: color),
       title: Text(endpoint.host),
       subtitle: Text(details.join(' · ')),
     );

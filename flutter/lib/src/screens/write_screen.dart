@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_icons/phosphor_icons.dart';
 
 import '../state/app_state.dart';
 import '../ui/theme.dart';
 import '../ui/widgets/glass.dart';
+import '../ui/widgets/screen_layout.dart';
 import '../ui/widgets/whats_happening.dart';
-import 'home_shell.dart';
 
 /// Changes your counter on the selected network: increment, decrement or
 /// reset. Each one is a transaction your signer pays a small fee for.
@@ -69,12 +70,15 @@ class _WriteScreenState extends State<WriteScreen> {
     final theme = Theme.of(context);
     final accent = accentOf(network);
 
-    return ScreenList(
+    return ScreenLayout(
+      title: 'Change your counter',
+      subtitle: 'Each change is a transaction your wallet signs and pays a small fee for.',
+      aside: WhatsHappeningCard(steps: steps),
       children: [
         const DemoBanner(),
         GlassCard(
           accent: accent,
-          padding: const EdgeInsets.all(28),
+          padding: const EdgeInsets.all(24),
           child: Column(
             children: [
               Text('Your counter on ${network.name}', style: theme.textTheme.titleMedium),
@@ -82,31 +86,40 @@ class _WriteScreenState extends State<WriteScreen> {
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 300),
                 transitionBuilder: (child, animation) => ScaleTransition(scale: animation, child: child),
-                child: Text(
-                  '$value',
+                // Scales down instead of overflowing when the number gets long.
+                child: FittedBox(
                   key: ValueKey(value),
-                  style: theme.textTheme.displayLarge?.copyWith(fontWeight: FontWeight.w800, color: accent),
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    '$value',
+                    style: theme.textTheme.displayLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: accent,
+                      // Digits of equal width, so the number doesn't jiggle as it changes.
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 20),
               Wrap(
                 alignment: WrapAlignment.center,
                 spacing: 12,
-                runSpacing: 12,
+                runSpacing: 8,
                 children: [
-                  FilledButton.tonalIcon(
-                    onPressed: busy ? null : () => pretend('decrement', (v) => v - 1),
-                    icon: const Icon(Icons.remove),
-                    label: const Text('Decrement'),
-                  ),
                   FilledButton.icon(
                     onPressed: busy ? null : () => pretend('increment', (v) => v + 1),
-                    icon: const Icon(Icons.add),
+                    icon: PhosphorIcon(PhosphorIconsRegular.plus, size: 18),
                     label: const Text('Increment'),
+                  ),
+                  FilledButton.tonalIcon(
+                    onPressed: busy ? null : () => pretend('decrement', (v) => v - 1),
+                    icon: PhosphorIcon(PhosphorIconsRegular.minus, size: 18),
+                    label: const Text('Decrement'),
                   ),
                   OutlinedButton.icon(
                     onPressed: busy ? null : () => pretend('reset', (_) => 0),
-                    icon: const Icon(Icons.restart_alt),
+                    icon: PhosphorIcon(PhosphorIconsRegular.arrowCounterClockwise, size: 18),
                     label: const Text('Reset'),
                   ),
                 ],
@@ -116,7 +129,6 @@ class _WriteScreenState extends State<WriteScreen> {
             ],
           ),
         ),
-        WhatsHappeningCard(steps: steps),
       ],
     );
   }

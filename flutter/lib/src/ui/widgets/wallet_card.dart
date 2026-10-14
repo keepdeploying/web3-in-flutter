@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:phosphor_icons/phosphor_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../chains/counter_reader.dart';
@@ -12,7 +13,8 @@ import '../../wallet/signing_explainer.dart';
 import '../../wallet/vault.dart';
 import '../theme.dart';
 import 'glass.dart';
-import 'network_picker.dart';
+import 'address_view.dart';
+import 'network_logo.dart';
 import 'shimmer.dart';
 import 'whats_happening.dart';
 
@@ -71,7 +73,7 @@ class _InAppWalletCardState extends State<InAppWalletCard> {
         children: [
           CardHeader(
             title: '1. Be the wallet',
-            icon: Icons.shield_outlined,
+            icon: PhosphorIconsDuotone.wallet,
             trailing: wallet.status == WalletStatus.unlocked ? _menu(context) : null,
           ),
           ...switch (wallet.status) {
@@ -97,12 +99,12 @@ class _InAppWalletCardState extends State<InAppWalletCard> {
       children: [
         FilledButton.icon(
           onPressed: () => WalletSetupScreen.open(context, SetupMode.create),
-          icon: const Icon(Icons.add),
+          icon: PhosphorIcon(PhosphorIconsRegular.plus, size: 18),
           label: const Text('Create a wallet'),
         ),
         OutlinedButton.icon(
           onPressed: () => WalletSetupScreen.open(context, SetupMode.import),
-          icon: const Icon(Icons.download_outlined),
+          icon: PhosphorIcon(PhosphorIconsRegular.downloadSimple, size: 18),
           label: const Text('Import a phrase'),
         ),
       ],
@@ -129,14 +131,17 @@ class _InAppWalletCardState extends State<InAppWalletCard> {
         const SizedBox(height: 12),
       ] else if (unlockError != null)
         Text(unlockError!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
-      Row(
+      Wrap(
+        alignment: WrapAlignment.spaceBetween,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 12,
+        runSpacing: 8,
         children: [
           FilledButton.icon(
             onPressed: busy ? null : unlock,
-            icon: const Icon(Icons.lock_open),
+            icon: PhosphorIcon(PhosphorIconsRegular.lockOpen, size: 18),
             label: const Text('Unlock'),
           ),
-          const Spacer(),
           TextButton(onPressed: () => _remove(context), child: const Text('Remove wallet')),
         ],
       ),
@@ -159,30 +164,13 @@ class _InAppWalletCardState extends State<InAppWalletCard> {
     return [
       Row(
         children: [
-          NetworkDot(network, size: 10),
+          NetworkLogo(network, size: 20),
           const SizedBox(width: 8),
-          Text('Your ${network.family.label} account', style: theme.textTheme.labelLarge),
+          Expanded(child: Text('Your ${network.family.label} account', style: theme.textTheme.labelLarge)),
         ],
       ),
       const SizedBox(height: 6),
-      Row(
-        children: [
-          Expanded(child: SelectableText(key.address, style: monoStyle(context, size: 13))),
-          IconButton(
-            tooltip: 'Copy the address',
-            icon: const Icon(Icons.copy, size: 18),
-            onPressed: () {
-              Clipboard.setData(ClipboardData(text: key.address));
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Address copied')));
-            },
-          ),
-          IconButton(
-            tooltip: 'View on the explorer',
-            icon: const Icon(Icons.open_in_new, size: 18),
-            onPressed: () => launchUrl(Uri.parse(network.addressUrl(key.address))),
-          ),
-        ],
-      ),
+      AddressView(address: key.address, network: network),
       const SizedBox(height: 8),
       FutureBuilder(
         future: balance,
@@ -190,18 +178,19 @@ class _InAppWalletCardState extends State<InAppWalletCard> {
           children: [
             Text('Balance', style: theme.textTheme.labelMedium),
             const SizedBox(width: 12),
-            if (snapshot.hasData)
-              Text(
-                '${formatUnits(snapshot.data!, network.decimals)} ${network.symbol}',
-                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-              )
-            else if (snapshot.hasError)
-              Text('could not read', style: TextStyle(color: theme.colorScheme.error))
-            else
-              const Shimmer(width: 80, height: 20),
+            Flexible(
+              child: snapshot.hasData
+                  ? Text(
+                      '${formatUnits(snapshot.data!, network.decimals)} ${network.symbol}',
+                      style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                    )
+                  : snapshot.hasError
+                  ? Text('could not read', style: TextStyle(color: theme.colorScheme.error))
+                  : const Shimmer(width: 80, height: 20),
+            ),
             IconButton(
               tooltip: 'Refresh',
-              icon: const Icon(Icons.refresh, size: 18),
+              icon: PhosphorIcon(PhosphorIconsRegular.arrowClockwise, size: 18),
               onPressed: () => setState(() => balanceFor = null),
             ),
           ],
@@ -214,13 +203,13 @@ class _InAppWalletCardState extends State<InAppWalletCard> {
         children: [
           FilledButton.icon(
             onPressed: busy ? null : () => _signTest(context),
-            icon: const Icon(Icons.draw_outlined),
+            icon: PhosphorIcon(PhosphorIconsRegular.signature, size: 18),
             label: const Text('Sign a test message'),
           ),
           Faucets.canFundInApp(network)
               ? OutlinedButton.icon(
                   onPressed: busy ? null : () => _fund(context, network, key.address),
-                  icon: const Icon(Icons.water_drop_outlined),
+                  icon: PhosphorIcon(PhosphorIconsRegular.drop, size: 18),
                   label: Text('Get ${Faucets.amount(network)}'),
                 )
               : OutlinedButton.icon(
@@ -231,7 +220,7 @@ class _InAppWalletCardState extends State<InAppWalletCard> {
                         .showSnackBar(const SnackBar(content: Text('Address copied. Paste it into the faucet.')));
                     launchUrl(Uri.parse(network.faucetUrl));
                   },
-                  icon: const Icon(Icons.water_drop_outlined),
+                  icon: PhosphorIcon(PhosphorIconsRegular.drop, size: 18),
                   label: const Text('Open a faucet'),
                 ),
         ],
@@ -241,7 +230,7 @@ class _InAppWalletCardState extends State<InAppWalletCard> {
       const SizedBox(height: 8),
       Row(
         children: [
-          Icon(Icons.science_outlined, size: 16, color: theme.colorScheme.tertiary),
+          PhosphorIcon(PhosphorIconsRegular.flask, size: 16, color: theme.colorScheme.tertiary),
           const SizedBox(width: 6),
           Expanded(
             child: Text(
@@ -263,18 +252,18 @@ class _InAppWalletCardState extends State<InAppWalletCard> {
         'reveal' => _reveal(context),
         _ => _remove(context),
       },
-      itemBuilder: (_) => const [
+      itemBuilder: (_) => [
         PopupMenuItem(
           value: 'lock',
-          child: ListTile(leading: Icon(Icons.lock_outline), title: Text('Lock')),
+          child: ListTile(leading: PhosphorIcon(PhosphorIconsRegular.lock), title: const Text('Lock')),
         ),
         PopupMenuItem(
           value: 'reveal',
-          child: ListTile(leading: Icon(Icons.visibility_outlined), title: Text('Show recovery phrase')),
+          child: ListTile(leading: PhosphorIcon(PhosphorIconsRegular.eye), title: const Text('Show recovery phrase')),
         ),
         PopupMenuItem(
           value: 'remove',
-          child: ListTile(leading: Icon(Icons.delete_outline), title: Text('Remove wallet')),
+          child: ListTile(leading: PhosphorIcon(PhosphorIconsRegular.trash), title: const Text('Remove wallet')),
         ),
       ],
     );
@@ -405,11 +394,15 @@ class _AllAddresses extends StatelessWidget {
       subtitle: const Text('One phrase, five derivation paths'),
       children: [
         for (final family in ChainFamily.values)
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            dense: true,
-            title: Text('${family.label}  ·  ${HdKeys.paths[family]}', style: theme.textTheme.labelMedium),
-            subtitle: SelectableText(wallet.keyFor(family)!.address, style: monoStyle(context, size: 12)),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('${family.label}  ·  ${HdKeys.paths[family]}', style: theme.textTheme.labelMedium),
+                AddressView(address: wallet.keyFor(family)!.address, size: 12),
+              ],
+            ),
           ),
       ],
     );

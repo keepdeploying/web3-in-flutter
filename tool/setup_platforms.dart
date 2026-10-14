@@ -11,6 +11,11 @@ import 'dart:io';
 
 const platforms = 'android,ios,web,macos,windows,linux';
 const appName = 'Flutter Counter';
+const appShortName = 'Counter';
+const appDescription = 'Read, sign in and write on EVM, Solana, Sui, Cosmos and NEAR testnets from one Flutter app.';
+
+/// Brand indigo (the Material 3 seed color), also the icon background.
+const brandColor = '#5B5BD6';
 
 final app = Directory('flutter');
 
@@ -54,6 +59,16 @@ void main() {
   patchMacos();
   print('5. Patching window titles on Windows and Linux...');
   patchDesktopTitles();
+  print('6. Patching the web page and manifest...');
+  patchWeb();
+  print('7. Setting the Linux window icon...');
+  patchLinuxIcon();
+
+  print('8. Generating launcher icons...');
+  generateLauncherIcons();
+
+  print('9. Installing the small web favicon...');
+  installFavicon();
 
   print('\nDone. Run the app with: cd flutter && flutter run');
 }
@@ -181,6 +196,103 @@ void patchDesktopTitles() {
   edit('linux/runner/my_application.cc', [
     Patch(marker: '"$appName"', find: '"flutter_counter"', replace: '"$appName"', all: true),
   ]);
+}
+
+void patchWeb() {
+  // The template names the app after the package and uses Flutter blue.
+  edit('web/index.html', [
+    Patch(
+      marker: 'content="$appDescription"',
+      find: 'content="A new Flutter project."',
+      replace: 'content="$appDescription"',
+    ),
+    Patch(
+      marker: 'name="theme-color"',
+      find: '<meta name="description"',
+      replace: '<meta name="theme-color" content="$brandColor">\n  <meta name="description"',
+    ),
+    Patch(marker: 'content="$appName"', find: 'content="flutter_counter"', replace: 'content="$appName"'),
+    Patch(
+      marker: '<title>$appName</title>',
+      find: '<title>flutter_counter</title>',
+      replace: '<title>$appName</title>',
+    ),
+  ]);
+  edit('web/manifest.json', [
+    Patch(marker: '"name": "$appName"', find: '"name": "flutter_counter"', replace: '"name": "$appName"'),
+    Patch(
+      marker: '"short_name": "$appShortName"',
+      find: '"short_name": "flutter_counter"',
+      replace: '"short_name": "$appShortName"',
+    ),
+    Patch(
+      marker: '"background_color": "$brandColor"',
+      find: '"background_color": "#0175C2"',
+      replace: '"background_color": "$brandColor"',
+    ),
+    Patch(
+      marker: '"theme_color": "$brandColor"',
+      find: '"theme_color": "#0175C2"',
+      replace: '"theme_color": "$brandColor"',
+    ),
+    Patch(
+      marker: '"description": "$appDescription"',
+      find: '"description": "A new Flutter project."',
+      replace: '"description": "$appDescription"',
+    ),
+  ]);
+}
+
+void patchLinuxIcon() {
+  // flutter_launcher_icons does not do Linux. The icon ships as a Flutter
+  // asset (see pubspec.yaml), so it sits at a fixed place next to the
+  // executable: <bundle>/data/flutter_assets/assets/icon/icon.png.
+  edit('linux/runner/my_application.cc', [
+    Patch(
+      marker: 'gtk_window_set_icon_from_file',
+      find: '  gtk_window_set_default_size(window, 1280, 720);',
+      replace: '''  // Window icon, found relative to the executable so it works from any folder.
+  g_autofree gchar* exe_path = g_file_read_link("/proc/self/exe", nullptr);
+  if (exe_path != nullptr) {
+    g_autofree gchar* exe_dir = g_path_get_dirname(exe_path);
+    g_autofree gchar* icon_path = g_build_filename(
+        exe_dir, "data", "flutter_assets", "assets", "icon", "icon.png", nullptr);
+    gtk_window_set_icon_from_file(window, icon_path, nullptr);
+  }
+
+  gtk_window_set_default_size(window, 1280, 720);''',
+    ),
+  ]);
+}
+
+void generateLauncherIcons() {
+  // Reads the flutter_launcher_icons section of flutter/pubspec.yaml and the
+  // source images in flutter/assets/icon/. It rewrites the icon files in every
+  // platform folder, so running it again gives the same result.
+  final result = Process.runSync(
+    'dart',
+    ['run', 'flutter_launcher_icons'],
+    workingDirectory: app.path,
+    runInShell: true,
+  );
+  if (result.exitCode != 0) {
+    fail(
+      'flutter_launcher_icons failed (exit code ${result.exitCode}):\n'
+      '${result.stdout}\n${result.stderr}\n'
+      'Try it by hand: cd flutter && dart run flutter_launcher_icons',
+    );
+  }
+  print('   generated icons for Android, iOS, web, Windows and macOS');
+}
+
+void installFavicon() {
+  // The launcher icons step shrinks the full icon to a 16 px favicon, where the
+  // ring and dots are unreadable. Overwrite it with the bold "+1" version
+  // (rendered from assets/icon/icon-small.svg).
+  final source = File('${app.path}/assets/icon/favicon.png');
+  if (!source.existsSync()) fail('Missing ${source.path}.');
+  source.copySync('${app.path}/web/favicon.png');
+  print('   copied assets/icon/favicon.png to web/favicon.png');
 }
 
 class Patch {

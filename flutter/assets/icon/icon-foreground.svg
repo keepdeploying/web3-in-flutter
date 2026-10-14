@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- Transparent background: Android adaptive icon foreground. -->
+  <!-- Ring and one dot per chain family: EVM, Solana, Sui, Cosmos, NEAR.
+       Everything stays inside the central 66% (radius 338) so Android
+       adaptive masks never clip it. -->
+  <g id="ring">
+    <circle cx="512" cy="512" r="296" fill="none" stroke="#FFFFFF" stroke-opacity="0.7" stroke-width="16"/>
+    <circle cx="512.0" cy="216.0" r="36" fill="#7CA7FF"/>
+    <circle cx="793.5" cy="420.5" r="36" fill="#B48CFF"/>
+    <circle cx="686.0" cy="751.5" r="36" fill="#6FE3D4"/>
+    <circle cx="338.0" cy="751.5" r="36" fill="#FFB86B"/>
+    <circle cx="230.5" cy="420.5" r="36" fill="#7EE787"/>
+  </g>
+  <!-- Bold white "+1", drawn with shapes so no font is needed. -->
+  <g id="plus-one" fill="#FFFFFF">
+    <rect x="313" y="476" width="209" height="70" rx="26"/>
+    <rect x="383" y="406" width="70" height="209" rx="26"/>
+    <path d="M 673 372 L 673 652 M 673 372 L 587 438" fill="none" stroke="#FFFFFF" stroke-width="75" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>

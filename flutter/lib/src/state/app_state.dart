@@ -10,13 +10,26 @@ export 'wallet_controller.dart';
 enum BackendMode {
   /// Runs the server's Dart code inside the app. Handy for demos and the web,
   /// but a real app must verify signatures on a server it controls.
-  local('In the app (simulated)'),
+  local(
+    'In the app (simulated)',
+    'In the app',
+    "Runs the server's code inside the app, so it is simulated: fine for demos, but a real app must verify "
+        'signatures on a server it controls.',
+  ),
 
   /// Calls the shelf server in `server/` over HTTP.
-  http('HTTP server');
+  http('HTTP server', 'HTTP server', 'Sends the signed message to the shelf server in server/, like a real app does.');
 
-  const BackendMode(this.label);
+  const BackendMode(this.label, this.shortLabel, this.description);
+
+  /// The full name.
   final String label;
+
+  /// A name short enough for a segmented button on a phone.
+  final String shortLabel;
+
+  /// One sentence about what this mode does, shown under the button.
+  final String description;
 }
 
 /// How much the signed sign-in message protects against replay and phishing.

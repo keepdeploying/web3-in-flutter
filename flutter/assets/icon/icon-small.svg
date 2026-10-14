@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1024" y2="1024" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#5B5BD6"/>
+      <stop offset="1" stop-color="#8E5BD6"/>
+    </linearGradient>
+  </defs>
+  <!-- Favicon variant: the full icon's ring and dots turn to mush at 16 px, so
+       only a large bold "+1" is kept. Rounded corners because a browser tab
+       does not mask the icon. -->
+  <rect width="1024" height="1024" rx="226" fill="url(#bg)"/>
+  <!-- Bold white "+1", drawn with shapes so no font is needed. -->
+  <g id="plus-one" fill="#FFFFFF">
+    <rect x="155" y="437" width="400" height="150" rx="50"/>
+    <rect x="280" y="312" width="150" height="400" rx="50"/>
+    <path d="M 795 270 L 795 754 M 795 270 L 675 380" fill="none" stroke="#FFFFFF" stroke-width="150" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>

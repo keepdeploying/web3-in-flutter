@@ -15,29 +15,50 @@ const Color seedColor = Color(0xFF5B5BD6);
 ThemeData buildTheme(Brightness brightness) {
   final scheme = ColorScheme.fromSeed(seedColor: seedColor, brightness: brightness);
   final base = ThemeData(colorScheme: scheme, useMaterial3: true);
+  // Bars and the rail draw their own glass (see GlassBar), so they stay clear.
+  const clear = Colors.transparent;
   return base.copyWith(
-    scaffoldBackgroundColor: Colors.transparent,
-    appBarTheme: const AppBarTheme(backgroundColor: Colors.transparent, elevation: 0, scrolledUnderElevation: 0),
+    scaffoldBackgroundColor: clear,
+    // Pads small controls (chips, checkboxes, icon buttons) to a 48 px touch
+    // target, also on desktop, where Flutter would shrink them.
+    materialTapTargetSize: MaterialTapTargetSize.padded,
+    appBarTheme: const AppBarTheme(backgroundColor: clear, elevation: 0, scrolledUnderElevation: 0),
     navigationBarTheme: NavigationBarThemeData(
-      backgroundColor: scheme.surface.withValues(alpha: 0.6),
+      backgroundColor: clear,
+      surfaceTintColor: clear,
+      elevation: 0,
       indicatorColor: scheme.primaryContainer,
+      iconTheme: WidgetStateProperty.fromMap({
+        WidgetState.selected: IconThemeData(color: scheme.onPrimaryContainer),
+        WidgetState.any: IconThemeData(color: scheme.onSurfaceVariant),
+      }),
     ),
     navigationRailTheme: NavigationRailThemeData(
-      backgroundColor: Colors.transparent,
+      backgroundColor: clear,
       indicatorColor: scheme.primaryContainer,
+      selectedIconTheme: IconThemeData(color: scheme.onPrimaryContainer),
+      unselectedIconTheme: IconThemeData(color: scheme.onSurfaceVariant),
+      selectedLabelTextStyle: base.textTheme.labelMedium?.copyWith(
+        color: scheme.onSurface,
+        fontWeight: FontWeight.w700,
+      ),
+      unselectedLabelTextStyle: base.textTheme.labelMedium?.copyWith(color: scheme.onSurfaceVariant),
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
+        minimumSize: const Size(64, 48),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
+        minimumSize: const Size(64, 48),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
     ),
+    textButtonTheme: TextButtonThemeData(style: TextButton.styleFrom(minimumSize: const Size(48, 44))),
   );
 }
 

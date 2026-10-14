@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:phosphor_icons/phosphor_icons.dart';
 
 import '../state/app_state.dart';
 import '../ui/theme.dart';
@@ -47,6 +48,16 @@ class _WalletSetupScreenState extends State<WalletSetupScreen> {
   String? error;
 
   List<String> get words => phrase.split(' ');
+
+  /// The steps the progress indicator shows. Importing skips the backup check.
+  List<String> get stepLabels =>
+      widget.mode == SetupMode.create ? ['Phrase', 'Check', 'Protect'] : ['Phrase', 'Protect'];
+
+  int get stepNumber => switch (step) {
+    _Step.phrase || _Step.import => 0,
+    _Step.quiz => 1,
+    _Step.protect => stepLabels.length - 1,
+  };
 
   @override
   void initState() {
@@ -109,7 +120,15 @@ class _WalletSetupScreenState extends State<WalletSetupScreen> {
       accent: accentOf(state.network),
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        appBar: AppBar(title: Text(title), backgroundColor: Colors.transparent),
+        appBar: AppBar(
+          title: Text(title),
+          backgroundColor: Colors.transparent,
+          leading: IconButton(
+            tooltip: 'Close',
+            icon: PhosphorIcon(PhosphorIconsRegular.x),
+            onPressed: () => Navigator.of(context).maybePop(),
+          ),
+        ),
         body: ListView(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
           children: [
@@ -117,15 +136,22 @@ class _WalletSetupScreenState extends State<WalletSetupScreen> {
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 640),
                 child: GlassCard(
-                  child: AnimatedSize(
-                    duration: const Duration(milliseconds: 200),
-                    alignment: Alignment.topCenter,
-                    child: switch (step) {
-                      _Step.phrase => _phraseStep(context),
-                      _Step.quiz => _quizStep(context),
-                      _Step.import => _importStep(context),
-                      _Step.protect => _protectStep(context),
-                    },
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _StepProgress(labels: stepLabels, current: stepNumber),
+                      const SizedBox(height: 20),
+                      AnimatedSize(
+                        duration: const Duration(milliseconds: 200),
+                        alignment: Alignment.topCenter,
+                        child: switch (step) {
+                          _Step.phrase => _phraseStep(context),
+                          _Step.quiz => _quizStep(context),
+                          _Step.import => _importStep(context),
+                          _Step.protect => _protectStep(context),
+                        },
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -141,7 +167,7 @@ class _WalletSetupScreenState extends State<WalletSetupScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const CardHeader(title: 'Your recovery phrase', icon: Icons.key),
+        const CardHeader(title: 'Your recovery phrase', icon: PhosphorIconsDuotone.key),
         const Text(
           'These 12 words are your wallet. Every key on every chain is derived from them, so anyone '
           'who has them controls the wallet, and if you lose them, nobody can get it back.',
@@ -149,17 +175,17 @@ class _WalletSetupScreenState extends State<WalletSetupScreen> {
         const SizedBox(height: 16),
         PhraseGrid(words: words),
         const SizedBox(height: 12),
-        Row(
+        Wrap(
+          alignment: WrapAlignment.spaceBetween,
           children: [
             TextButton.icon(
               onPressed: () => setState(() => phrase = HdKeys.generateMnemonic()),
-              icon: const Icon(Icons.refresh, size: 18),
+              icon: PhosphorIcon(PhosphorIconsRegular.arrowClockwise, size: 18),
               label: const Text('New words'),
             ),
-            const Spacer(),
             TextButton.icon(
               onPressed: () => Clipboard.setData(ClipboardData(text: phrase)),
-              icon: const Icon(Icons.copy, size: 18),
+              icon: PhosphorIcon(PhosphorIconsRegular.copy, size: 18),
               label: const Text('Copy'),
             ),
           ],
@@ -193,7 +219,7 @@ class _WalletSetupScreenState extends State<WalletSetupScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const CardHeader(title: 'Check your backup', icon: Icons.fact_check_outlined),
+        const CardHeader(title: 'Check your backup', icon: PhosphorIconsDuotone.listChecks),
         const Text('Pick the right word for each position. Wallets ask this so nobody skips the backup.'),
         for (final position in quizPositions) ...[
           const SizedBox(height: 16),
@@ -219,10 +245,13 @@ class _WalletSetupScreenState extends State<WalletSetupScreen> {
             ),
         ],
         const SizedBox(height: 20),
-        Row(
+        Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 12,
+          runSpacing: 8,
           children: [
             TextButton(onPressed: () => setState(() => step = _Step.phrase), child: const Text('Show the words again')),
-            const Spacer(),
             FilledButton(
               onPressed: allCorrect ? () => setState(() => step = _Step.protect) : null,
               child: const Text('Next'),
@@ -248,7 +277,7 @@ class _WalletSetupScreenState extends State<WalletSetupScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const CardHeader(title: 'Enter a recovery phrase', icon: Icons.download_outlined),
+        const CardHeader(title: 'Enter a recovery phrase', icon: PhosphorIconsDuotone.downloadSimple),
         const Text(
           'Paste or type 12 or 24 words from MetaMask, Phantom, Slush, Keplr or a NEAR wallet. The '
           'app derives the same addresses those wallets show. Use a testnet-only phrase.',
@@ -298,7 +327,7 @@ class _WalletSetupScreenState extends State<WalletSetupScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const CardHeader(title: 'Protect it on this device', icon: Icons.lock_outline),
+        const CardHeader(title: 'Protect it on this device', icon: PhosphorIconsDuotone.lock),
         Text('The phrase will be saved in ${vault.storageName}.'),
         if (inMemory) ...[
           const SizedBox(height: 8),
@@ -369,7 +398,7 @@ class _WalletSetupScreenState extends State<WalletSetupScreen> {
             onPressed: canFinish ? finish : null,
             icon: saving
                 ? const SizedBox.square(dimension: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                : const Icon(Icons.check),
+                : PhosphorIcon(PhosphorIconsRegular.check, size: 18),
             label: const Text('Save the wallet'),
           ),
         ),
@@ -389,7 +418,8 @@ class PhraseGrid extends StatelessWidget {
     final theme = Theme.of(context);
     return LayoutBuilder(
       builder: (context, constraints) {
-        final columns = constraints.maxWidth > 480 ? 4 : 3;
+        // As many columns as fit a word of up to eight letters; 12 words divide evenly into 2, 3 or 4.
+        final columns = ((constraints.maxWidth + 8) ~/ 112).clamp(2, 4);
         final width = (constraints.maxWidth - (columns - 1) * 8) / columns;
         return Wrap(
           spacing: 8,
@@ -407,10 +437,15 @@ class PhraseGrid extends StatelessWidget {
                   children: [
                     SizedBox(width: 22, child: Text('${i + 1}', style: theme.textTheme.bodySmall)),
                     Expanded(
-                      child: Text(
-                        word,
-                        key: Key('phrase-word-$i'),
-                        style: monoStyle(context, size: 14, weight: FontWeight.w600),
+                      // Shrinks a little, rather than breaking a word in two, at large text sizes.
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          word,
+                          key: Key('phrase-word-$i'),
+                          style: monoStyle(context, size: 14, weight: FontWeight.w600),
+                        ),
                       ),
                     ),
                   ],
@@ -419,6 +454,111 @@ class PhraseGrid extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+/// A row of numbered circles joined by lines, showing how far along the setup is.
+///
+/// Done steps show a tick, the current one is filled, and the next ones are
+/// outlined.
+class _StepProgress extends StatelessWidget {
+  const _StepProgress({required this.labels, required this.current});
+
+  final List<String> labels;
+  final int current;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Semantics(
+      label: 'Step ${current + 1} of ${labels.length}: ${labels[current]}',
+      excludeSemantics: true,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (final (i, label) in labels.indexed)
+            Expanded(
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      // The line before the circle is drawn once the step is reached.
+                      Expanded(
+                        child: _Line(visible: i > 0, filled: i <= current),
+                      ),
+                      _StepCircle(number: i + 1, done: i < current, active: i == current),
+                      Expanded(
+                        child: _Line(visible: i < labels.length - 1, filled: i < current),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    label,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      fontWeight: i == current ? FontWeight.w700 : FontWeight.w500,
+                      color: i <= current ? scheme.onSurface : scheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Line extends StatelessWidget {
+  const _Line({required this.visible, required this.filled});
+
+  final bool visible;
+  final bool filled;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      height: 1.5,
+      color: !visible ? Colors.transparent : (filled ? scheme.primary : scheme.outlineVariant),
+    );
+  }
+}
+
+class _StepCircle extends StatelessWidget {
+  const _StepCircle({required this.number, required this.done, required this.active});
+
+  final int number;
+  final bool done;
+  final bool active;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final filled = done || active;
+    return Container(
+      width: 24,
+      height: 24,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: filled ? scheme.primary : Colors.transparent,
+        border: Border.all(color: filled ? scheme.primary : scheme.outline, width: 1.5),
+      ),
+      child: done
+          ? PhosphorIcon(PhosphorIconsBold.check, size: 13, color: scheme.onPrimary)
+          : Text(
+              '$number',
+              textScaler: TextScaler.noScaling,
+              style: theme.textTheme.labelSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: active ? scheme.onPrimary : scheme.onSurfaceVariant,
+              ),
+            ),
     );
   }
 }

@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_icons/phosphor_icons.dart';
 
 import '../state/app_state.dart';
 import '../ui/theme.dart';
 import '../ui/widgets/glass.dart';
+import '../ui/widgets/screen_layout.dart';
 import '../ui/widgets/wallet_card.dart';
 import '../ui/widgets/whats_happening.dart';
-import 'home_shell.dart';
 
 /// The three ways to get a signer, then signing in to the backend.
 ///
@@ -37,17 +38,17 @@ class _AuthScreenState extends State<AuthScreen> {
   Widget build(BuildContext context) {
     final state = AppScope.of(context);
     final theme = Theme.of(context);
-    return ScreenList(
-      children: [
-        Text('Choose how to connect', style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700)),
-        Text(
+    return ScreenLayout(
+      title: 'Connect and sign in',
+      subtitle:
           'Each option ends in the same place: an address that can sign messages and transactions on '
           '${state.network.name}.',
-        ),
+      aside: WhatsHappeningCard(steps: steps ?? overview),
+      children: [
         InAppWalletCard(onSteps: (value) => setState(() => steps = value)),
         const _BranchCard(
           number: 2,
-          icon: Icons.install_mobile_outlined,
+          icon: PhosphorIconsRegular.deviceMobile,
           title: 'Use a wallet on this device',
           body:
               'Talk to wallets you already have, with no SDK: Phantom and Solflare deep links and the '
@@ -56,7 +57,7 @@ class _AuthScreenState extends State<AuthScreen> {
         ),
         const _BranchCard(
           number: 3,
-          icon: Icons.extension_outlined,
+          icon: PhosphorIconsRegular.puzzlePiece,
           title: 'Use an SDK',
           body:
               'Reown AppKit opens one modal with hundreds of wallets over WalletConnect, so you '
@@ -67,15 +68,19 @@ class _AuthScreenState extends State<AuthScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const CardHeader(title: 'Sign in to the backend', icon: Icons.verified_user_outlined),
+              const CardHeader(title: 'Sign in to the backend', icon: PhosphorIconsDuotone.shieldCheck),
               const Text('After connecting, sign a message. The backend checks the signature and gives you a session.'),
               const SizedBox(height: 16),
-              SegmentedButton<SigningLevel>(
-                segments: [
-                  for (final level in SigningLevel.values) ButtonSegment(value: level, label: Text(level.label)),
-                ],
-                selected: {state.signingLevel},
-                onSelectionChanged: (s) => state.signingLevel = s.first,
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: SegmentedButton<SigningLevel>(
+                  showSelectedIcon: false,
+                  segments: [
+                    for (final level in SigningLevel.values) ButtonSegment(value: level, label: Text(level.label)),
+                  ],
+                  selected: {state.signingLevel},
+                  onSelectionChanged: (s) => state.signingLevel = s.first,
+                ),
               ),
               const SizedBox(height: 8),
               Text(state.signingLevel.description, style: theme.textTheme.bodySmall),
@@ -103,7 +108,6 @@ class _AuthScreenState extends State<AuthScreen> {
             ],
           ),
         ),
-        WhatsHappeningCard(steps: steps ?? overview),
       ],
     );
   }
@@ -146,10 +150,7 @@ class _BranchCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircleAvatar(
-            backgroundColor: theme.colorScheme.primaryContainer,
-            child: Icon(icon, color: theme.colorScheme.onPrimaryContainer),
-          ),
+          IconTile(icon: icon, size: 40, iconSize: 22, circle: true),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
