@@ -10,6 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../chains/networks.dart';
 import '../../state/app_state.dart';
 import '../../wallet/installed/mobile/wallet_browsers.dart';
+import '../../wallet/wallet_signer.dart';
 import '../../wallet/signing_explainer.dart';
 import '../theme.dart';
 import 'address_view.dart';
@@ -20,10 +21,14 @@ import 'whats_happening.dart';
 ///
 /// Lists the wallets found for the selected network's chain. Once one is
 /// connected, it signs for that chain instead of the in-app wallet.
+///
+/// With [sdk], the same card is option 3: wallets reached through an SDK
+/// (Reown AppKit, near_wallet_connect) instead of found on the device.
 class InstalledWalletCard extends StatefulWidget {
-  const InstalledWalletCard({super.key, required this.onSteps});
+  const InstalledWalletCard({super.key, required this.onSteps, this.sdk = false});
 
   final ValueChanged<List<HappeningStep>> onSteps;
+  final bool sdk;
 
   @override
   State<InstalledWalletCard> createState() => _InstalledWalletCardState();
@@ -44,8 +49,12 @@ class _InstalledWalletCardState extends State<InstalledWalletCard> {
     final state = AppScope.of(context);
     final network = state.network;
     final connections = state.connections;
-    final connected = connections.signerFor(network.family);
-    final wallets = connections.walletsFor(network.family);
+    final sdk = widget.sdk;
+    final wallets = sdk ? connections.sdkWalletsFor(network.family) : connections.walletsFor(network.family);
+    // Each card shows the connections made from its own wallets.
+    final signer = connections.signerFor(network.family);
+    final connected = signer != null && wallets.contains(signer.wallet) ? signer : null;
+    final mine = wallets.contains(connections.lastAttempt);
     final theme = Theme.of(context);
 
     return GlassCard(
@@ -53,7 +62,9 @@ class _InstalledWalletCardState extends State<InstalledWalletCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CardHeader(title: '2. Use a wallet you have', icon: PhosphorIconsDuotone.plugsConnected),
+          sdk
+              ? const CardHeader(title: '3. Use an SDK', icon: PhosphorIconsDuotone.puzzlePiece)
+              : const CardHeader(title: '2. Use a wallet you have', icon: PhosphorIconsDuotone.plugsConnected),
           if (connected != null) ...[
             Row(
               children: [
@@ -61,7 +72,7 @@ class _InstalledWalletCardState extends State<InstalledWalletCard> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    '${connected.wallet.name}, connected through ${connected.wallet.via}',
+                    '${connected.name}, connected through ${connected.wallet.via}',
                     style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
                   ),
                 ),
@@ -72,7 +83,7 @@ class _InstalledWalletCardState extends State<InstalledWalletCard> {
             const SizedBox(height: 4),
             Text(
               'It signs for ${network.family.label} instead of the in-app wallet. Each signature and transaction '
-              'opens ${connected.wallet.name} for you to approve.',
+              'opens ${connected.name} for you to approve.',
               style: theme.textTheme.bodySmall,
             ),
             const SizedBox(height: 12),
@@ -85,7 +96,7 @@ class _InstalledWalletCardState extends State<InstalledWalletCard> {
                   icon: signing
                       ? const SizedBox.square(dimension: 16, child: CircularProgressIndicator(strokeWidth: 2))
                       : const PhosphorIcon(PhosphorIconsRegular.signature, size: 18),
-                  label: Text(signing ? 'Approve it in ${connected.wallet.name}...' : 'Sign a test message'),
+                  label: Text(signing ? 'Approve it in ${connected.name}...' : 'Sign a test message'),
                 ),
                 TextButton.icon(
                   onPressed: () => connections.disconnect(network.family),
@@ -96,12 +107,19 @@ class _InstalledWalletCardState extends State<InstalledWalletCard> {
             ),
           ] else ...[
             Text(
-              'Talk to wallets you already have, with no SDK: browser extensions through the standards they '
-              'announce themselves with, and wallet apps on phones.',
+              sdk
+                  ? 'Let an SDK write the connection code: Reown AppKit opens one modal for hundreds of wallets '
+                        'over WalletConnect, and near_wallet_connect does the same for NEAR wallets. The app still '
+                        'decides what to sign.'
+                  : 'Talk to wallets you already have, with no SDK: browser extensions through the standards they '
+                        'announce themselves with, and wallet apps on phones.',
             ),
             const SizedBox(height: 12),
             if (wallets.isEmpty)
-              Text(connections.finder.noneFoundHint(network.family), style: theme.textTheme.bodySmall)
+              Text(
+                sdk ? _noSdkHint(network.family) : connections.finder.noneFoundHint(network.family),
+                style: theme.textTheme.bodySmall,
+              )
             else
               Wrap(
                 spacing: 8,
@@ -117,7 +135,7 @@ class _InstalledWalletCardState extends State<InstalledWalletCard> {
                     ),
                 ],
               ),
-            if (_onPhone && WalletBrowser.forFamily(network.family).isNotEmpty) ...[
+            if (!sdk && _onPhone && WalletBrowser.forFamily(network.family).isNotEmpty) ...[
               const SizedBox(height: 16),
               Text(
                 "Or open the web version in a wallet's browser, where it finds the wallet as it does on a desktop:",
@@ -137,12 +155,12 @@ class _InstalledWalletCardState extends State<InstalledWalletCard> {
                 ],
               ),
             ],
-            if (connections.connecting case final wallet?) ...[
+            if (connections.connecting case final wallet? when mine) ...[
               const SizedBox(height: 8),
               Text('Approve the connection in ${wallet.name}.', style: theme.textTheme.bodySmall),
             ],
           ],
-          if (connections.error case final error?) ...[
+          if (connections.error case final error? when mine) ...[
             const SizedBox(height: 8),
             Text(error, style: TextStyle(color: theme.colorScheme.error)),
           ],
@@ -150,6 +168,16 @@ class _InstalledWalletCardState extends State<InstalledWalletCard> {
       ),
     );
   }
+
+  /// Why there is no SDK option for [family] here.
+  static String _noSdkHint(ChainFamily family) => switch (family) {
+    ChainFamily.evm || ChainFamily.solana =>
+      "Reown AppKit for Flutter runs on Android and iOS only. Here, use the wallets you have (option 2).",
+    ChainFamily.sui => 'Sui wallets barely support WalletConnect yet, so this app leaves Sui to options 1 and 2.',
+    ChainFamily.cosmos =>
+      'No Flutter SDK connects Cosmos wallets on Osmosis testnet. Use the in-app wallet, or Keplr on the web.',
+    ChainFamily.near => 'No NEAR wallet supports testnet here.',
+  };
 
   Future<void> _signTest(InstalledSigner signer, Network network) async {
     final message = 'Hello from Flutter Counter!\nTime: ${DateTime.now().toUtc().toIso8601String()}';
@@ -160,7 +188,7 @@ class _InstalledWalletCardState extends State<InstalledWalletCard> {
       widget.onSteps([
         HappeningStep(
           title: 'The message',
-          detail: 'Plain text, chosen by the app. ${signer.wallet.name} showed it to you before signing.',
+          detail: 'Plain text, chosen by the app. ${signer.name} showed it to you before signing.',
           code: message,
           status: StepStatus.done,
         ),

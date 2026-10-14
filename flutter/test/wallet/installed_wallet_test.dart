@@ -1,8 +1,9 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_counter/src/chains/evm/evm_address.dart';
 import 'package:flutter_counter/src/chains/networks.dart';
 import 'package:flutter_counter/src/state/connection_controller.dart';
 import 'package:flutter_counter/src/ui/widgets/installed_wallet_card.dart';
+import 'package:flutter_counter/src/wallet/sdk/sdk_wallets.dart';
 import 'package:flutter_counter/src/wallet/wallet_signer.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -149,5 +150,11 @@ void main() {
     // A plain SVG is left as it is.
     const plain = '<svg viewBox="0 0 1 1"><path d="M0 0"/></svg>';
     expect(flattenNestedSvg(plain), plain);
+  });
+
+  test('SDK wallets: Intear for NEAR everywhere, Reown AppKit only on phones', () {
+    final wallets = sdkWallets(GlobalKey<NavigatorState>());
+    expect(wallets.map((w) => w.name), ['Intear Wallet'], reason: 'tests run on a desktop VM');
+    expect(wallets.single.families, {ChainFamily.near});
   });
 }

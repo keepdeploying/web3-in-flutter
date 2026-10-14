@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:phosphor_icons/phosphor_icons.dart';
 
 import '../state/app_state.dart';
-import '../ui/widgets/glass.dart';
 import '../ui/widgets/installed_wallet_card.dart';
 import '../ui/widgets/descriptions_card.dart';
 import '../ui/widgets/screen_layout.dart';
@@ -55,62 +53,10 @@ class _AuthScreenState extends State<AuthScreen> {
       children: [
         InAppWalletCard(onSteps: (value) => setState(() => steps = value)),
         InstalledWalletCard(onSteps: (value) => setState(() => steps = value)),
-        const _SdkCard(
-          number: 3,
-          icon: PhosphorIconsRegular.puzzlePiece,
-          title: 'Use an SDK',
-          body:
-              'Reown AppKit opens one modal with hundreds of wallets over WalletConnect, so you '
-              "don't write the connection code yourself. Android and iOS.",
-          action: 'Connect with Reown',
-        ),
+        InstalledWalletCard(sdk: true, onSteps: (value) => setState(() => steps = value)),
         SignInCard(onSteps: (value) => setState(() => steps = value)),
         const DescriptionsCard(),
       ],
-    );
-  }
-}
-
-class _SdkCard extends StatelessWidget {
-  const _SdkCard({
-    required this.number,
-    required this.icon,
-    required this.title,
-    required this.body,
-    required this.action,
-  });
-
-  final int number;
-  final IconData icon;
-  final String title;
-  final String body;
-
-  /// The button's label. The button stays disabled: this option isn't built.
-  final String action;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return GlassCard(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          IconTile(icon: icon, size: 40, iconSize: 22, circle: true),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('$number. $title', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
-                const SizedBox(height: 4),
-                Text(body),
-                const SizedBox(height: 12),
-                OutlinedButton(onPressed: null, child: Text(action)),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

@@ -23,6 +23,8 @@ dependencies:
   phosphor_icons: ^3.0.1
   # Receives the links wallet apps open to answer (Phantom and Solflare).
   app_links: ^7.2.2
+  reown_appkit: ^1.9.0
+  near_wallet_connect: ^0.5.1
 
 dev_dependencies:
   flutter_test:

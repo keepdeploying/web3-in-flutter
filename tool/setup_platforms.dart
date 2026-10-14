@@ -144,6 +144,28 @@ void patchAndroid() {
         </intent>
 ''',
     ),
+    // Every fluttercounter:// link, not only wallet/: near_wallet_connect
+    // answers on fluttercounter://callback.
+    Patch(
+      marker: '<data android:scheme="fluttercounter" />',
+      find: '<data android:scheme="fluttercounter" android:host="wallet" />',
+      replace: '<data android:scheme="fluttercounter" />',
+    ),
+    // Reown AppKit marks the wallets that are installed. It checks these
+    // apps by package name.
+    Patch(
+      marker: 'android:name="io.metamask"',
+      find: '    <queries>\n',
+      replace: '''    <queries>
+        <package android:name="io.metamask" />
+        <package android:name="com.wallet.crypto.trustapp" />
+        <package android:name="me.rainbow" />
+        <package android:name="org.toshi" />
+        <package android:name="io.zerion.android" />
+        <package android:name="app.phantom" />
+        <package android:name="com.solflare.mobile" />
+''',
+    ),
     // The Mobile Wallet Adapter talks to the wallet over a WebSocket on
     // localhost, which is plain ws://. Android blocks unencrypted traffic
     // unless the app allows it, so allow it for localhost only.
@@ -184,6 +206,31 @@ void patchAndroid() {
       ),
     ]);
   }
+
+  // Reown AppKit pulls in coinbase_wallet_sdk, which still compiles against
+  // Android API 31 (its own dependencies need 34 or later) and points at a
+  // ProGuard file it doesn't ship. Fix both for every build.
+  edit('android/build.gradle.kts', [
+    Patch(
+      marker: 'compileSdkVersion(36)',
+      find: 'subprojects {\n    project.evaluationDependsOn(":app")',
+      replace: '''// Some plugins still compile against old Android APIs that their own
+// dependencies no longer support. Build them all against API 36.
+// coinbase_wallet_sdk also names a consumer-rules.pro it doesn't ship,
+// which breaks release builds, so drop that reference.
+subprojects {
+    afterEvaluate {
+        extensions.findByType(com.android.build.gradle.BaseExtension::class.java)?.compileSdkVersion(36)
+        if (project.name == "coinbase_wallet_sdk") {
+            extensions.findByType(com.android.build.api.dsl.LibraryExtension::class.java)
+                ?.defaultConfig?.consumerProguardFiles?.clear()
+        }
+    }
+}
+subprojects {
+    project.evaluationDependsOn(":app")''',
+    ),
+  ]);
 
   // Sign every build with the debug keystore committed in keys/, so an APK
   // from any machine installs over an earlier one. Testnet demo only.
@@ -255,6 +302,19 @@ void patchIos() {
           '\t\t<string>keplrwallet</string>\n'
           '\t</array>\n'
           '\t<key>CFBundleDisplayName</key>',
+    ),
+    // Reown AppKit checks which wallets are installed by their schemes.
+    Patch(
+      marker: '<string>metamask</string>',
+      find: '\t\t<string>keplrwallet</string>\n',
+      replace:
+          '\t\t<string>keplrwallet</string>\n'
+          '\t\t<string>metamask</string>\n'
+          '\t\t<string>trust</string>\n'
+          '\t\t<string>rainbow</string>\n'
+          '\t\t<string>cbwallet</string>\n'
+          '\t\t<string>zerion</string>\n'
+          '\t\t<string>wc</string>\n',
     ),
   ]);
 }

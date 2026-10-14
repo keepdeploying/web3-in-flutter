@@ -11,3 +11,13 @@ workspace:
 
 dev_dependencies:
   lints: ^6.1.0
+
+# Reown's packages still ask for flutter_secure_storage 10 and
+# package_info_plus 9, while the app and near_wallet_connect use
+# flutter_secure_storage 11, which needs win32 6 like package_info_plus 10.
+# Reown only calls APIs both newer versions kept
+# (AndroidOptions.resetOnError, IOSOptions.accessibility,
+# PackageInfo.fromPlatform), so the newer ones are safe.
+dependency_overrides:
+  flutter_secure_storage: ^11.2.0
+  package_info_plus: ^10.2.2

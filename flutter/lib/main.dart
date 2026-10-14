@@ -33,6 +33,7 @@ class FlutterCounterApp extends StatelessWidget {
         listenable: state,
         builder: (context, _) => MaterialApp(
           title: 'Flutter Counter',
+          navigatorKey: state.navigatorKey,
           debugShowCheckedModeBanner: false,
           theme: buildTheme(Brightness.light),
           darkTheme: buildTheme(Brightness.dark),

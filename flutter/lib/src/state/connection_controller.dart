@@ -12,12 +12,17 @@ export '../wallet/installed/installed_wallet.dart';
 /// A connected account takes over from the in-app wallet for its family,
 /// for sign-in and writes, until it is disconnected.
 class ConnectionController extends ChangeNotifier {
-  ConnectionController({WalletFinder? finder}) : finder = finder ?? WalletFinder.forThisPlatform() {
+  ConnectionController({WalletFinder? finder, this.sdkWallets = const []})
+    : finder = finder ?? WalletFinder.forThisPlatform() {
     this.finder.addListener(notifyListeners);
     this.finder.start();
   }
 
   final WalletFinder finder;
+
+  /// Wallets reached through an SDK (Reown AppKit, near_wallet_connect)
+  /// rather than found on the device.
+  final List<InstalledWallet> sdkWallets;
 
   final _connected = <ChainFamily, InstalledSigner>{};
 
@@ -27,6 +32,10 @@ class ConnectionController extends ChangeNotifier {
   /// Why the last connection failed.
   String? error;
 
+  /// The wallet of the last connection attempt, so the card that lists it
+  /// shows its progress and errors.
+  InstalledWallet? lastAttempt;
+
   /// The connected account for [family], if any.
   InstalledSigner? signerFor(ChainFamily family) => _connected[family];
 
@@ -35,8 +44,14 @@ class ConnectionController extends ChangeNotifier {
       if (wallet.families.contains(family)) wallet,
   ];
 
+  List<InstalledWallet> sdkWalletsFor(ChainFamily family) => [
+    for (final wallet in sdkWallets)
+      if (wallet.families.contains(family)) wallet,
+  ];
+
   Future<void> connect(InstalledWallet wallet, Network network) async {
     connecting = wallet;
+    lastAttempt = wallet;
     error = null;
     notifyListeners();
     try {

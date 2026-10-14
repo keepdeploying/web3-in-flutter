@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import '../backend/backend.dart';
 import '../chains/networks.dart';
 import '../wallet/wallet_signer.dart';
+import '../wallet/sdk/sdk_wallets.dart';
 import 'connection_controller.dart';
 import 'services.dart';
 import 'session_controller.dart';
@@ -64,7 +65,7 @@ class AppState extends ChangeNotifier {
     this.httpClient,
   }) : services = services ?? ChainServices(),
        wallet = wallet ?? WalletController(),
-       connections = connections ?? ConnectionController(),
+       connections = connections ?? ConnectionController(sdkWallets: sdkWallets(_navigatorKey)),
        localBackend = localBackend ?? LocalBackend() {
     // Widgets that watch the app state also rebuild when the wallets or the
     // session change.
@@ -84,6 +85,10 @@ class AppState extends ChangeNotifier {
 
   /// The RPC pools and counter readers for every network.
   final ChainServices services;
+
+  /// The app's root navigator, where SDK modals (Reown AppKit) open.
+  GlobalKey<NavigatorState> get navigatorKey => _navigatorKey;
+  static final _navigatorKey = GlobalKey<NavigatorState>();
 
   /// The in-app wallet.
   final WalletController wallet;

@@ -20,6 +20,11 @@ class DeepLinks {
   static const host = 'wallet';
 
   final _waiting = <String, Completer<Uri>>{};
+  final _forwards = <String, void Function(Uri uri)>{};
+
+  /// Sends every link with [path] to [handler], for an SDK that reads the
+  /// answers itself (Reown AppKit).
+  void forward(String path, void Function(Uri uri) handler) => _forwards[path] = handler;
 
   /// The link a wallet should open to answer: `fluttercounter://wallet/<path>`.
   Uri redirectFor(String path) => Uri(scheme: scheme, host: host, path: '/$path');
@@ -40,6 +45,8 @@ class DeepLinks {
 
   void _received(Uri uri) {
     if (uri.scheme != scheme || uri.host != host) return;
-    _waiting.remove(uri.path.replaceFirst('/', ''))?.complete(uri);
+    final path = uri.path.replaceFirst('/', '');
+    _forwards[path]?.call(uri);
+    _waiting.remove(path)?.complete(uri);
   }
 }
