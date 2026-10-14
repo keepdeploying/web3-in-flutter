@@ -85,4 +85,55 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets('the sidebar collapses to icons on wide windows only', (tester) async {
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    tester.view.physicalSize = const Size(1440, 900);
+
+    await tester.pumpWidget(FlutterCounterApp(state: AppState(services: ChainServices(client: fakeChain))));
+    await tester.pump(const Duration(milliseconds: 1500));
+    NavigationRail rail() => tester.widget(find.byType(NavigationRail));
+
+    expect(rail().extended, isTrue);
+    await tester.tap(find.byKey(const Key('rail-toggle')));
+    await tester.pumpAndSettle(const Duration(milliseconds: 100));
+    expect(rail().extended, isFalse);
+    expect(find.byTooltip('Expand the sidebar'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('rail-toggle')));
+    await tester.pumpAndSettle(const Duration(milliseconds: 100));
+    expect(rail().extended, isTrue);
+
+    // A tablet-sized window has a rail of icons already, and no toggle.
+    tester.view.physicalSize = const Size(900, 900);
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(rail().extended, isFalse);
+    expect(find.byKey(const Key('rail-toggle')), findsNothing);
+  });
+
+  testWidgets('the header picks the theme, and shows labels only when there is room', (tester) async {
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    tester.view.physicalSize = const Size(1280, 900);
+
+    final state = AppState(services: ChainServices(client: fakeChain));
+    await tester.pumpWidget(FlutterCounterApp(state: state));
+    await tester.pump(const Duration(milliseconds: 1500));
+
+    expect(find.descendant(of: find.byKey(const Key('theme-button')), matching: find.text('System')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('theme-button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('theme-dark')));
+    await tester.pumpAndSettle();
+    expect(state.themeMode, ThemeMode.dark);
+    expect(find.descendant(of: find.byKey(const Key('theme-button')), matching: find.text('Dark')), findsOneWidget);
+
+    // A phone: icons only, and screen readers still hear the names.
+    tester.view.physicalSize = const Size(390, 844);
+    await tester.pumpAndSettle();
+    expect(find.descendant(of: find.byKey(const Key('network-chip')), matching: find.text('Sepolia')), findsNothing);
+    expect(find.bySemanticsLabel('Network: Sepolia'), findsOneWidget);
+    expect(find.bySemanticsLabel('Theme: Dark'), findsOneWidget);
+  });
 }

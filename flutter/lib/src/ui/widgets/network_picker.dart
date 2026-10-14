@@ -5,6 +5,7 @@ import '../../chains/chain_family.dart';
 import '../../chains/networks.dart';
 import '../../state/app_state.dart';
 import '../layout.dart';
+import 'header_pill.dart';
 import 'network_logo.dart';
 
 /// The button at the top of every screen that shows the selected network and
@@ -15,51 +16,13 @@ class NetworkPickerButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final network = AppScope.of(context).network;
-    final scheme = Theme.of(context).colorScheme;
-    final compact = WindowSize.of(context).isCompact;
-    return Semantics(
-      button: true,
-      label: 'Network: ${network.name}',
-      excludeSemantics: true,
-      child: InkWell(
-        key: const Key('network-chip'),
-        customBorder: const StadiumBorder(),
-        onTap: () => showNetworkPicker(context),
-        // The chip looks 36 px tall; the tap area around it is 44.
-        child: ConstrainedBox(
-          constraints: BoxConstraints(minHeight: 44, maxWidth: compact ? 180 : 260),
-          // widthFactor: shrink to the pill, instead of centering it in the full width.
-          child: Center(
-            widthFactor: 1,
-            child: DecoratedBox(
-              decoration: ShapeDecoration(
-                color: scheme.surface.withValues(alpha: 0.6),
-                shape: StadiumBorder(side: BorderSide(color: scheme.outlineVariant)),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(8, 6, 10, 6),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    NetworkLogo(network, size: 20),
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: Text(
-                        network.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.labelLarge,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    PhosphorIcon(PhosphorIconsRegular.caretDown, size: 14, color: scheme.onSurfaceVariant),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
+    return HeaderPill(
+      key: const Key('network-chip'),
+      semanticLabel: 'Network: ${network.name}',
+      // On phones the logo says which network it is.
+      label: HeaderPill.showLabels(context) ? network.name : null,
+      icon: NetworkLogo(network, size: 20),
+      onTap: () => showNetworkPicker(context),
     );
   }
 }

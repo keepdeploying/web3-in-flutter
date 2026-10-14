@@ -7,6 +7,7 @@ import '../ui/theme.dart';
 import '../ui/widgets/app_icon.dart';
 import '../ui/widgets/glass.dart';
 import '../ui/widgets/network_picker.dart';
+import '../ui/widgets/theme_mode_button.dart';
 import 'auth_screen.dart';
 import 'read_screen.dart';
 import 'settings_screen.dart';
@@ -17,7 +18,8 @@ import 'write_screen.dart';
 ///
 /// The navigation follows the window size (see [WindowSize]): a glass bar at
 /// the bottom on phones, a rail on the left on tablets, and an extended rail
-/// with labels beside the icons on large windows.
+/// with labels beside the icons on large windows. On large windows the rail
+/// can also be collapsed to icons, to give the screen more room.
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
 
@@ -27,6 +29,10 @@ class HomeShell extends StatefulWidget {
 
 class _HomeShellState extends State<HomeShell> {
   int index = 0;
+
+  /// Whether the user collapsed the rail. Only large windows extend it, so
+  /// only they offer this.
+  bool railCollapsed = false;
 
   /// The four destinations. The icon is drawn regular, and filled when selected.
   static const destinations = <({IconData icon, IconData selected, String label})>[
@@ -71,7 +77,13 @@ class _HomeShellState extends State<HomeShell> {
             ? SafeArea(bottom: false, child: content)
             : Row(
                 children: [
-                  _GlassRail(size: size, index: index, onSelected: goTo),
+                  _GlassRail(
+                    size: size,
+                    index: index,
+                    onSelected: goTo,
+                    collapsed: railCollapsed,
+                    onToggle: () => setState(() => railCollapsed = !railCollapsed),
+                  ),
                   Expanded(child: SafeArea(left: false, child: content)),
                 ],
               ),
@@ -97,17 +109,26 @@ class _HomeShellState extends State<HomeShell> {
 }
 
 /// The navigation rail of tablets and large windows. Expanded windows get
-/// labels beside the icons and the app's name at the top.
+/// labels beside the icons, the app's name at the top, and a button at the
+/// bottom that collapses the rail to icons and back.
 class _GlassRail extends StatelessWidget {
-  const _GlassRail({required this.size, required this.index, required this.onSelected});
+  const _GlassRail({
+    required this.size,
+    required this.index,
+    required this.onSelected,
+    required this.collapsed,
+    required this.onToggle,
+  });
 
   final WindowSize size;
   final int index;
   final ValueChanged<int> onSelected;
+  final bool collapsed;
+  final VoidCallback onToggle;
 
   @override
   Widget build(BuildContext context) {
-    final extended = size.isExpanded;
+    final extended = size.isExpanded && !collapsed;
     final short = WindowSize.isShort(context);
     return GlassBar(
       vertical: true,
@@ -127,6 +148,18 @@ class _GlassRail extends StatelessWidget {
                   minExtendedWidth: 232,
                   labelType: extended ? NavigationRailLabelType.none : NavigationRailLabelType.all,
                   groupAlignment: -1,
+                  trailingAtBottom: true,
+                  trailing: size.isExpanded
+                      ? Padding(
+                          padding: EdgeInsets.symmetric(vertical: short ? 8 : 16),
+                          child: IconButton(
+                            key: const Key('rail-toggle'),
+                            tooltip: collapsed ? 'Expand the sidebar' : 'Collapse the sidebar',
+                            onPressed: onToggle,
+                            icon: const PhosphorIcon(PhosphorIconsRegular.sidebarSimple),
+                          ),
+                        )
+                      : null,
                   leading: Padding(
                     padding: EdgeInsets.symmetric(vertical: short ? 8 : 16),
                     child: extended
@@ -161,8 +194,8 @@ class _GlassRail extends StatelessWidget {
   }
 }
 
-/// The strip above every screen: the app's name (on phones and tablets) and
-/// the network picker.
+/// The strip above every screen: the app's name (on phones and tablets), the
+/// theme menu and the network picker. On phones those two show only icons.
 class _TopBar extends StatelessWidget {
   const _TopBar({required this.size});
 
@@ -189,6 +222,8 @@ class _TopBar extends StatelessWidget {
                   )
                 : const SizedBox.shrink(),
           ),
+          const ThemeModeButton(),
+          const SizedBox(width: 8),
           const NetworkPickerButton(),
         ],
       ),

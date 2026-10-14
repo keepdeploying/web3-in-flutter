@@ -120,10 +120,12 @@ void main() {
         expect(state.network, Networks.suiTestnet, reason: 'tapping the row selects the network');
         expect(list, findsNothing, reason: 'the picker closes');
         expect(find.byKey(const Key('network-chip')), findsOneWidget);
+        // Phones show the network's logo only; wider windows add its name.
         expect(
           find.descendant(of: find.byKey(const Key('network-chip')), matching: find.text('Sui Testnet')),
-          findsOneWidget,
+          size.width >= 600 ? findsOneWidget : findsNothing,
         );
+        expect(find.bySemanticsLabel('Network: Sui Testnet'), findsOneWidget);
         expectNoOverflow(tester, 'after picking Sui Testnet');
 
         await goTo(tester, 'Read');
