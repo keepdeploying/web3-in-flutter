@@ -1,0 +1,6 @@
+# Tests tagged "live" call public testnet endpoints. They are skipped by
+# default so the suite works offline. Run them with:
+#   dart test -t live --run-skipped
+tags:
+  live:
+    skip: 'Needs network access. Run with: dart test -t live --run-skipped'

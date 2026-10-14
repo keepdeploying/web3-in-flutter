@@ -10,6 +10,7 @@ resolution: workspace
 
 dependencies:
   blockchain_utils: ^7.1.0
+  http: ^1.6.0
   shelf: ^1.4.2
   shelf_router: ^1.1.4
 

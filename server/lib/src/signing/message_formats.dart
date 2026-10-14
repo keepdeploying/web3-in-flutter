@@ -41,10 +41,14 @@ abstract final class SuiPersonalMessage {
   /// Intent scope 3 (PersonalMessage), version 0, app ID 0 (Sui).
   static const intent = [3, 0, 0];
 
-  /// Signature scheme flag for ed25519 in Sui's serialized signatures.
+  /// Signature scheme flags in Sui's serialized signatures. Wallets made
+  /// from a recovery phrase use ed25519; zkLogin (sign in with Google and
+  /// others) has its own, much longer format.
   static const ed25519Flag = 0x00;
+  static const secp256k1Flag = 0x01;
+  static const zkLoginFlag = 0x05;
 
-  /// The 32-byte digest the ed25519 key signs: blake2b-256 of the intent
+  /// The 32-byte digest the key signs: blake2b-256 of the intent
   /// followed by the message as BCS `vector<u8>` (a ULEB128 length, then
   /// the bytes).
   static List<int> digest(String message) {
@@ -57,12 +61,22 @@ abstract final class SuiPersonalMessage {
   static String serialize(List<int> signature, List<int> publicKey) =>
       base64Encode([ed25519Flag, ...signature, ...publicKey]);
 
-  /// Splits a serialized signature back into its parts.
+  /// Splits a serialized ed25519 or secp256k1 signature into its parts:
+  /// flag (1 byte), signature (64 bytes) and public key (32 or 33 bytes).
   static ({int flag, List<int> signature, List<int> publicKey}) parse(String serialized) {
     final bytes = base64Decode(serialized);
-    if (bytes.length != 97) throw const FormatException('Expected 97 bytes: flag, 64-byte signature, 32-byte key');
+    final keyLength = switch (bytes.isEmpty ? -1 : bytes[0]) {
+      ed25519Flag => 32,
+      secp256k1Flag => 33,
+      final flag => throw FormatException('Unsupported Sui signature scheme (flag $flag)'),
+    };
+    if (bytes.length != 1 + 64 + keyLength) throw FormatException('Expected ${1 + 64 + keyLength} bytes');
     return (flag: bytes[0], signature: bytes.sublist(1, 65), publicKey: bytes.sublist(65));
   }
+
+  /// A Sui address: blake2b-256 of the scheme flag and the public key.
+  static String address(int flag, List<int> publicKey) =>
+      BytesUtils.toHexString(QuickCrypto.blake2b256Hash([flag, ...publicKey]), prefix: '0x');
 }
 
 /// ADR-36, how Keplr and Leap sign arbitrary data (`signArbitrary`).

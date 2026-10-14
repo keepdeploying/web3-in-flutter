@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
+import '../backend/backend.dart';
 import '../chains/networks.dart';
 import 'services.dart';
+import 'session_controller.dart';
 import 'wallet_controller.dart';
 
+export '../backend/backend.dart' show SignInLevel;
+export 'session_controller.dart';
 export 'wallet_controller.dart';
 
 /// Where the app sends signed messages for verification.
@@ -32,16 +37,15 @@ enum BackendMode {
   final String description;
 }
 
-/// How much the signed sign-in message protects against replay and phishing.
-/// The app lets you switch between them to compare.
-enum SigningLevel {
-  fixed('Level 1', 'A fixed message. A copied signature works forever.'),
-  nonce('Level 2', 'A one-time nonce from the server. Stops replays, not phishing.'),
-  standard('Level 3', 'A structured message (SIWE style) with domain, nonce and expiry.');
+/// Labels for the sign-in levels, which the server package defines.
+extension SignInLevelText on SignInLevel {
+  String get label => 'Level ${index + 1}';
 
-  const SigningLevel(this.label, this.description);
-  final String label;
-  final String description;
+  String get description => switch (this) {
+    SignInLevel.fixed => 'A fixed message. A copied signature works forever.',
+    SignInLevel.nonce => 'A one-time nonce from the server. Stops replays, not phishing.',
+    SignInLevel.standard => 'A full sign-in message: domain, chain, nonce and expiry. Stops replays and phishing.',
+  };
 }
 
 /// App-wide settings and selections, shared through [AppScope].
@@ -49,11 +53,18 @@ enum SigningLevel {
 /// It's a plain [ChangeNotifier]: widgets that read it rebuild when it calls
 /// [notifyListeners]. No state-management package needed.
 class AppState extends ChangeNotifier {
-  AppState({ChainServices? services, WalletController? wallet})
+  AppState({ChainServices? services, WalletController? wallet, LocalBackend? localBackend, this.httpClient})
     : services = services ?? ChainServices(),
-      wallet = wallet ?? WalletController() {
-    // Widgets that watch the app state also rebuild when the wallet changes.
+      wallet = wallet ?? WalletController(),
+      localBackend = localBackend ?? LocalBackend() {
+    // Widgets that watch the app state also rebuild when the wallet or the
+    // session changes.
     this.wallet.addListener(notifyListeners);
+    session.addListener(notifyListeners);
+    // A locked or removed wallet can't keep a session: sign out.
+    this.wallet.addListener(() {
+      if (this.wallet.status != WalletStatus.unlocked) session.signOut();
+    });
   }
 
   /// The RPC pools and counter readers for every network.
@@ -62,23 +73,47 @@ class AppState extends ChangeNotifier {
   /// The in-app wallet (branch A).
   final WalletController wallet;
 
+  /// Who is signed in to the backend, and the last sign-in attempt.
+  final session = SessionController();
+
+  /// The backend that runs inside the app. Kept for the app's lifetime, so
+  /// its nonces and sessions survive switching screens.
+  final LocalBackend localBackend;
+
+  /// For tests: the HTTP client the HTTP backend uses.
+  final http.Client? httpClient;
+  HttpBackend? _httpBackend;
+
+  /// The backend that checks sign-ins, as chosen in Settings.
+  Backend get backend => _backendMode == BackendMode.local
+      ? localBackend
+      : _httpBackend ??= HttpBackend(Uri.parse(_serverUrl), client: httpClient);
+
   Network _network = Networks.sepolia;
   ThemeMode _themeMode = ThemeMode.system;
   BackendMode _backendMode = BackendMode.local;
-  SigningLevel _signingLevel = SigningLevel.standard;
+  SignInLevel _signInLevel = SignInLevel.standard;
   String _serverUrl = 'http://localhost:8080';
 
   Network get network => _network;
   ThemeMode get themeMode => _themeMode;
   BackendMode get backendMode => _backendMode;
-  SigningLevel get signingLevel => _signingLevel;
+  SignInLevel get signInLevel => _signInLevel;
   String get serverUrl => _serverUrl;
 
   set network(Network value) => _update(() => _network = value);
   set themeMode(ThemeMode value) => _update(() => _themeMode = value);
-  set backendMode(BackendMode value) => _update(() => _backendMode = value);
-  set signingLevel(SigningLevel value) => _update(() => _signingLevel = value);
-  set serverUrl(String value) => _update(() => _serverUrl = value);
+  set backendMode(BackendMode value) => _update(() {
+    _backendMode = value;
+    // A session token only means something to the backend that issued it.
+    session.signOut();
+  });
+  set signInLevel(SignInLevel value) => _update(() => _signInLevel = value);
+  set serverUrl(String value) => _update(() {
+    _serverUrl = value;
+    _httpBackend = null;
+    session.signOut();
+  });
 
   void _update(VoidCallback change) {
     change();

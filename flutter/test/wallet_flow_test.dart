@@ -41,6 +41,9 @@ Future<AppState> openSignIn(WidgetTester tester) async {
 
 Future<void> tapText(WidgetTester tester, String text) async {
   await tester.ensureVisible(find.text(text).last);
+  await tester.pumpAndSettle();
+  await Scrollable.ensureVisible(tester.element(find.text(text).last), alignment: 0.5);
+  await tester.pumpAndSettle();
   await tester.tap(find.text(text).last);
   await tester.pumpAndSettle(const Duration(milliseconds: 100));
 }

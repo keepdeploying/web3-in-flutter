@@ -33,15 +33,25 @@ class WalletController extends ChangeNotifier {
   WalletStatus _status = WalletStatus.loading;
   WalletStatus get status => _status;
 
-  Map<ChainFamily, ChainKey> _keys = const {};
+  /// The BIP-39 seed while unlocked. Each chain's key is derived from it
+  /// the first time it is needed: deriving all five up front takes seconds
+  /// on the web, and most sessions only use one or two chains.
+  List<int>? _seed;
+  final _keys = <ChainFamily, ChainKey>{};
+  final _signers = <ChainFamily, InAppSigner>{};
 
   /// The key for [family], while unlocked.
-  ChainKey? keyFor(ChainFamily family) => _keys[family];
+  ChainKey? keyFor(ChainFamily family) {
+    final seed = _seed;
+    if (seed == null) return null;
+    return _keys[family] ??= HdKeys.derive(seed, family);
+  }
 
-  /// A signer for [family], while unlocked.
+  /// A signer for [family], while unlocked. Kept, so the signing setup
+  /// (expensive for secp256k1) happens once.
   WalletSigner? signerFor(ChainFamily family) {
-    final key = _keys[family];
-    return key == null ? null : InAppSigner(key);
+    final key = keyFor(family);
+    return key == null ? null : _signers[family] ??= InAppSigner(key);
   }
 
   /// Checks for a saved wallet, and unlocks it if that needs no prompt.
@@ -79,7 +89,7 @@ class WalletController extends ChangeNotifier {
 
   Future<void> lock() async {
     await vault.lock();
-    _keys = const {};
+    _forgetKeys();
     _set(WalletStatus.locked);
   }
 
@@ -88,16 +98,23 @@ class WalletController extends ChangeNotifier {
 
   Future<void> remove() async {
     await vault.delete();
-    _keys = const {};
+    _forgetKeys();
     _set(WalletStatus.none);
   }
 
   void _load(String phrase) {
-    // Derive every chain's key once. The phrase string itself isn't kept.
-    // (Dart can't wipe a String from memory, one of the limits of a demo
-    // wallet compared with one that keeps keys in secure hardware.)
-    _keys = HdKeys.deriveAll(phrase);
+    // Keep the seed, not the phrase. (Dart can't wipe a String or a list
+    // from memory, one of the limits of a demo wallet compared with one that
+    // keeps keys in secure hardware.)
+    _forgetKeys();
+    _seed = HdKeys.seedFrom(phrase);
     _set(WalletStatus.unlocked);
+  }
+
+  void _forgetKeys() {
+    _seed = null;
+    _keys.clear();
+    _signers.clear();
   }
 
   void _set(WalletStatus status) {

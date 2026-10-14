@@ -18,5 +18,9 @@ abstract class WalletSigner {
 
   /// Signs [message] the way the chain's wallets do (EIP-191, Sui personal
   /// message, ADR-36, NEP-413...). See `message_formats.dart`.
-  Future<SignedMessage> signMessage(String message);
+  ///
+  /// [nearNonce] is NEAR only: NEP-413 signs a 32-byte nonce next to the
+  /// message. At sign-in level 3 the server chooses it; otherwise the signer
+  /// makes a random one.
+  Future<SignedMessage> signMessage(String message, {List<int>? nearNonce});
 }

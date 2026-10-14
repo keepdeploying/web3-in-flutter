@@ -92,6 +92,8 @@ class SettingsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text('Start it with: cd server && dart run bin/server.dart', style: theme.textTheme.bodySmall),
+                const SizedBox(height: 8),
+                const _ConnectionCheck(),
               ],
             ],
           ),
@@ -238,6 +240,54 @@ class _EndpointRow extends StatelessWidget {
       leading: PhosphorIcon(icon, size: 18, color: color),
       title: Text(endpoint.host),
       subtitle: Text(details.join(' · ')),
+    );
+  }
+}
+
+/// Calls the server's /health route and shows whether it answered.
+class _ConnectionCheck extends StatefulWidget {
+  const _ConnectionCheck();
+
+  @override
+  State<_ConnectionCheck> createState() => _ConnectionCheckState();
+}
+
+class _ConnectionCheckState extends State<_ConnectionCheck> {
+  bool checking = false;
+  String? result;
+  bool ok = false;
+
+  Future<void> check() async {
+    final backend = AppScope.of(context).backend;
+    setState(() => checking = true);
+    try {
+      final health = await backend.health();
+      ok = health['ok'] == true;
+      result = ok ? 'Connected: ${health['service']} answered.' : 'The server answered, but not with ok.';
+    } catch (e) {
+      ok = false;
+      result = 'No answer: $e';
+    }
+    if (mounted) setState(() => checking = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = ok ? Colors.green.shade600 : Theme.of(context).colorScheme.error;
+    return Wrap(
+      spacing: 12,
+      runSpacing: 4,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        OutlinedButton.icon(
+          onPressed: checking ? null : check,
+          icon: checking
+              ? const SizedBox.square(dimension: 16, child: CircularProgressIndicator(strokeWidth: 2))
+              : const Icon(PhosphorIconsRegular.plugs, size: 18),
+          label: const Text('Test connection'),
+        ),
+        if (result != null) Text(result!, style: TextStyle(color: color)),
+      ],
     );
   }
 }

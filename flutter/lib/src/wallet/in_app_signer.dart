@@ -25,6 +25,12 @@ class InAppSigner implements WalletSigner {
 
   static const defaultRecipient = 'flutter-counter.app';
 
+  // The library's signer objects, made once: setting up a secp256k1 signer
+  // costs more than signing with it.
+  late final _ethSigner = ETHSigner.fromKeyBytes(key.privateKey);
+  late final _secpSigner = Secp256k1Signer.fromKeyBytes(key.privateKey);
+  late final _edSigner = Ed25519Signer.fromKeyBytes(key.privateKey);
+
   /// Makes NEP-413 nonces. Random by default; tests pass a fixed one.
   final List<int> Function() _nonce;
 
@@ -38,36 +44,35 @@ class InAppSigner implements WalletSigner {
   String get name => 'In-app wallet';
 
   @override
-  Future<SignedMessage> signMessage(String message) async {
+  Future<SignedMessage> signMessage(String message, {List<int>? nearNonce}) async {
     // Wallets refuse empty messages, and ADR-36 forbids them outright.
     if (message.isEmpty) throw ArgumentError.value(message, 'message', 'Nothing to sign');
-    final private = key.privateKey;
     switch (family) {
       case ChainFamily.evm:
         // ETHSigner returns r, s and v (27 or 28). v lets the verifier
         // recover the public key, and from it the address.
-        final signature = ETHSigner.fromKeyBytes(private).sign(Eip191.hash(message), hashMessage: false);
+        final signature = _ethSigner.sign(Eip191.hash(message), hashMessage: false);
         return _signed(message, BytesUtils.toHexString(signature.toBytes(), prefix: '0x'));
 
       case ChainFamily.solana:
-        final signature = Ed25519Signer.fromKeyBytes(private).sign(SolanaMessage.bytes(message));
+        final signature = _edSigner.sign(SolanaMessage.bytes(message));
         return _signed(message, Base58Encoder.encode(signature));
 
       case ChainFamily.sui:
-        final signature = Ed25519Signer.fromKeyBytes(private).sign(SuiPersonalMessage.digest(message));
+        final signature = _edSigner.sign(SuiPersonalMessage.digest(message));
         return _signed(message, SuiPersonalMessage.serialize(signature, key.publicKey));
 
       case ChainFamily.cosmos:
         final digest = Adr36.digest(signer: address, message: message);
-        final signature = lowS(Secp256k1Signer.fromKeyBytes(private).sign(digest, hashMessage: false));
+        final signature = lowS(_secpSigner.sign(digest, hashMessage: false));
         return _signed(message, base64Encode(signature), publicKey: base64Encode(key.publicKey));
 
       case ChainFamily.near:
         // A fresh random nonce per message. The backend remembers used
         // nonces, so the same signature can't be replayed.
-        final nonce = _nonce();
+        final nonce = nearNonce ?? _nonce();
         final hash = Nep413.hash(message: message, nonce: nonce, recipient: recipient);
-        final signature = Ed25519Signer.fromKeyBytes(private).sign(hash);
+        final signature = _edSigner.sign(hash);
         return _signed(
           message,
           base64Encode(signature),

@@ -1,0 +1,36 @@
+[
+  {
+    "family": "evm",
+    "address": "0xfFFAa29e82d5455985a908235536d2cD01aCce47",
+    "message": "Sign in to Flutter Counter\n\nNonce: 7Hq2k9Xa\nUnicode check: café, 你好",
+    "signature": "0xba0eaad8881d4116a4f8c2f499e63042280202bbe099c7699f873edac86cd2e13d235c065e827fe5167a57f7d78e92c739efbd01356c01d6074ca352d5da51751b"
+  },
+  {
+    "family": "solana",
+    "address": "DfmTeaToGmhvmzxFA4fCVZJZhdj4HJm2RAvnHSXdkGqX",
+    "message": "Sign in to Flutter Counter\n\nNonce: 7Hq2k9Xa\nUnicode check: café, 你好",
+    "signature": "2JMUjRmkaDYrarZpMSqVquSyv2J1vXASYVcdiCUavj592YpRZ7MHeSS9xKHxStT3P359DzxLHmF3awVH3QdZakRW"
+  },
+  {
+    "family": "sui",
+    "address": "0x78c51a7b5ae65f0966b1cad833ee3ef6ededbe9bc6ff4579543c70ff9c67d29e",
+    "message": "Sign in to Flutter Counter\n\nNonce: 7Hq2k9Xa\nUnicode check: café, 你好",
+    "signature": "AJW4hoNG27ZUHgIYgDYYAcxafJLjVc4r5rgar6hI5cm6HepA1oCgegYwl75Q+m+AiPQmehTy3STF3ExUgR8oYAAdWCtzTT5WmO6UR2/Q3S7+582/0mXyCiEOfUNNIfgV3Q=="
+  },
+  {
+    "family": "cosmos",
+    "address": "osmo1ed3nqhzlm58pzehnajalx4q5wt4zs85p2cud7a",
+    "message": "Sign in to Flutter Counter\n\nNonce: 7Hq2k9Xa\nUnicode check: café, 你好",
+    "signature": "Sey7vdRSlX50Qz6Qzxk+LdW5aQwdENiYPafXJNBmlc8r0VKfUyzCN2SDw7ki5ugNX8aQtmDnA58nnwioGtvjJw==",
+    "publicKey": "AsNV8GCODXEt8VVKBL0VToHsHZ+wMIil75E0Wdz3z1OR"
+  },
+  {
+    "family": "near",
+    "address": "92b28ade98c901eaeb5cd6de863d7b5e9684ca2718c7efd556af051cc4ac5670",
+    "message": "Sign in to Flutter Counter\n\nNonce: 7Hq2k9Xa\nUnicode check: café, 你好",
+    "signature": "fUx9XCxhvgbU6upS0b5mlJ/K5igU9pY2qdXMElaZ/dQYIKcqHl6T8/ttyzQm33QWBoCYTweeR/yrenvWBrsFDw==",
+    "publicKey": "ed25519:AseRot4tQPULiM2yLiBKJp8Ej1b3TQgB4ERpwyGktp4X",
+    "nonce": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+    "recipient": "flutter-counter.app"
+  }
+]
