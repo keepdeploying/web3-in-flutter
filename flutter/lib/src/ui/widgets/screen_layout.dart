@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:phosphor_icons/phosphor_icons.dart';
 
 import '../layout.dart';
-import 'glass.dart';
 
 /// The scrollable page every screen puts its cards in: a header, the cards,
 /// and an optional [aside] that explains what is happening.
@@ -117,26 +115,6 @@ class _PageHeader extends StatelessWidget {
                 style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
               ),
             ),
-        ],
-      ),
-    );
-  }
-}
-
-/// A short banner that marks data as made up, until the real reads land.
-class DemoBanner extends StatelessWidget {
-  const DemoBanner({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return GlassCard(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        children: [
-          PhosphorIcon(PhosphorIconsRegular.flask, color: scheme.tertiary),
-          const SizedBox(width: 10),
-          const Expanded(child: Text('Design preview: the numbers on this screen are placeholders.')),
         ],
       ),
     );

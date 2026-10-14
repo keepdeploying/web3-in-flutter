@@ -70,7 +70,8 @@ void main() {
 
     await tester.tap(find.text('Write').first);
     await tester.pump(const Duration(milliseconds: 400));
-    expect(find.text('Your counter on Sepolia'), findsOneWidget);
+    expect(find.text('Change your counter'), findsOneWidget);
+    expect(find.text('A wallet signs every change'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('network-chip')));
     await tester.pump(const Duration(milliseconds: 600));
@@ -79,6 +80,9 @@ void main() {
     await tester.tap(find.text('Solana Devnet'));
     await tester.pump(const Duration(milliseconds: 600));
     expect(state.network, Networks.solanaDevnet);
-    expect(find.text('Your counter on Solana Devnet'), findsOneWidget);
+    expect(
+      find.descendant(of: find.byKey(const Key('network-chip')), matching: find.text('Solana Devnet')),
+      findsOneWidget,
+    );
   });
 }

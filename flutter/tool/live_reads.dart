@@ -1,5 +1,5 @@
 // Reads the counter on every network through the app's own readers and RPC
-// pools, and prints what it finds. A quick end-to-end check of M5 reads:
+// pools, and prints what it finds. A quick end-to-end check of the reads:
 //
 //   cd flutter && dart run tool/live_reads.dart
 // ignore_for_file: avoid_print

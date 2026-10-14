@@ -278,7 +278,7 @@ class _InAppWalletCardState extends State<InAppWalletCard> {
     widget.onSteps([
       HappeningStep(
         title: 'The message',
-        detail: 'Plain text. In M7, the backend writes it and checks the signature.',
+        detail: 'Plain text, chosen by the app. Signing in to the backend works the same way, with a message the backend writes.',
         code: message,
         status: StepStatus.done,
       ),

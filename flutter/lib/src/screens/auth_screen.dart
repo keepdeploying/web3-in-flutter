@@ -60,7 +60,7 @@ class _AuthScreenState extends State<AuthScreen> {
           body:
               'Talk to wallets you already have, with no SDK: Phantom and Solflare deep links and the '
               'Mobile Wallet Adapter on phones, and browser extensions on the web.',
-          milestone: 'M9',
+          action: 'Connect an installed wallet',
         ),
         const _BranchCard(
           number: 3,
@@ -69,7 +69,7 @@ class _AuthScreenState extends State<AuthScreen> {
           body:
               'Reown AppKit opens one modal with hundreds of wallets over WalletConnect, so you '
               "don't write the connection code yourself. Android and iOS.",
-          milestone: 'M10',
+          action: 'Connect with Reown',
         ),
         SignInCard(onSteps: (value) => setState(() => steps = value)),
         const DescriptionsCard(),
@@ -84,14 +84,16 @@ class _BranchCard extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.body,
-    required this.milestone,
+    required this.action,
   });
 
   final int number;
   final IconData icon;
   final String title;
   final String body;
-  final String milestone;
+
+  /// The button's label. The button stays disabled: this option isn't built.
+  final String action;
 
   @override
   Widget build(BuildContext context) {
@@ -110,7 +112,7 @@ class _BranchCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(body),
                 const SizedBox(height: 12),
-                OutlinedButton(onPressed: null, child: Text('Coming in $milestone')),
+                OutlinedButton(onPressed: null, child: Text(action)),
               ],
             ),
           ),

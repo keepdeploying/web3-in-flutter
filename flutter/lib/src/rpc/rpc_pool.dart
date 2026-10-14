@@ -154,6 +154,24 @@ class RpcPool {
     });
   }
 
+  /// Sends a POST with a JSON body to a REST path (Cosmos LCD).
+  Future<Map<String, dynamic>> postJson(String path, Object body) {
+    return request((endpoint, client) async {
+      final uri = endpoint.replace(path: '${endpoint.path}$path');
+      return _decode(await client.post(uri, headers: {'content-type': 'application/json'}, body: jsonEncode(body)));
+    });
+  }
+
+  /// A GET that may not find anything yet, like a transaction that isn't in
+  /// a block. A 404 returns null instead of counting as a failed endpoint.
+  Future<Map<String, dynamic>?> getJsonIfFound(String path) {
+    return request((endpoint, client) async {
+      final response = await client.get(endpoint.replace(path: '${endpoint.path}$path'));
+      if (response.statusCode == 404) return null;
+      return _decode(response);
+    });
+  }
+
   /// Asks every endpoint one cheap question and records how each did.
   /// [probe] runs against a single endpoint; throw to mark it unhealthy.
   Future<void> checkAll(Future<void> Function(Uri endpoint, http.Client client) probe) async {

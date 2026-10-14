@@ -92,10 +92,9 @@ void main() {
 
         await goTo(tester, 'Sign in');
         await goTo(tester, 'Write');
-        // A pretend transaction, with its steps and spinner.
-        await tapText(tester, 'Increment');
-        await settle(tester, 4000);
-        expectNoOverflow(tester, 'Write, after a transaction');
+        // No wallet yet: the screen explains why a wallet is needed.
+        expect(find.text('A wallet signs every change'), findsOneWidget);
+        expectNoOverflow(tester, 'Write, without a wallet');
 
         await goTo(tester, 'Settings');
         await tap(tester, find.byType(ExpansionTile).first);
@@ -163,6 +162,16 @@ void main() {
         state.network = network;
         await settle(tester);
         expectNoOverflow(tester, 'wallet card on ${network.name}');
+      }
+
+      // The counter card with real numbers, or a read error where the fake
+      // chain doesn't answer.
+      await goTo(tester, 'Write');
+      for (final network in Networks.all) {
+        state.network = network;
+        await settle(tester);
+        expect(find.text('Increment'), findsOneWidget);
+        expectNoOverflow(tester, 'Write on ${network.name}');
       }
 
       await state.wallet.lock();

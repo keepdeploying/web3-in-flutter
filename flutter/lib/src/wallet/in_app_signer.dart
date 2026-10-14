@@ -94,6 +94,19 @@ class InAppSigner implements WalletSigner {
         recipient: recipient,
       );
 
+  // Raw signing, for transactions. Each chain decides what to hash; these
+  // only apply the key. A wallet app runs the same three operations when
+  // you approve a transaction.
+
+  /// secp256k1 over a 32-byte hash, with the recovery id (EVM).
+  ETHSignature signEvmHash(List<int> hash) => _ethSigner.sign(hash, hashMessage: false);
+
+  /// secp256k1 over a 32-byte digest, low-S, 64 bytes (Cosmos).
+  List<int> signSecp256k1(List<int> digest) => lowS(_secpSigner.sign(digest, hashMessage: false));
+
+  /// ed25519 over any bytes (Solana, Sui, NEAR).
+  List<int> signEd25519(List<int> message) => _edSigner.sign(message);
+
   /// Cosmos only accepts "low-S" signatures: of the two valid values for s
   /// (s and n - s), the smaller one. This makes signatures non-malleable.
   static List<int> lowS(List<int> signature) {

@@ -78,6 +78,21 @@ cd flutter && flutter test
 cd server && dart test
 ```
 
+## Try It From the Command Line
+
+The app's chain code is plain Dart, so these tools run it against the real testnets with the dev recovery phrase in `keys/`:
+
+```bash
+cd flutter
+dart run tool/addresses.dart      # the dev wallet's address on every chain
+dart run tool/live_reads.dart     # read every counter, through the RPC pools
+dart run tool/try_writes.dart     # send increment, decrement and reset on every network
+dart run tool/try_sign_in.dart    # sign in to a running server on every network and level
+dart run tool/sign_vectors.dart   # signatures to check with tool/verify_signatures
+```
+
+`try_writes.dart` sends real transactions and spends a little test currency. Pass network IDs (`sepolia`, `solana-devnet`, `sui-testnet`...) to run only some.
+
 ## Toolchain Versions Used
 
 | Tool                                 | Version                                                                   |
