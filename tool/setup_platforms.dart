@@ -103,7 +103,70 @@ void patchAndroid() {
       find: 'android:label="flutter_counter"',
       replace: 'android:label="$appName"',
     ),
+    // Wallet apps answer by opening fluttercounter://wallet/..., and
+    // app_links reads it. Flutter's own deep linking would try to open
+    // that as a route, so it is turned off.
+    Patch(
+      marker: 'android:scheme="fluttercounter"',
+      find: '''            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>''',
+      replace: '''            <meta-data android:name="flutter_deeplinking_enabled" android:value="false" />
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="fluttercounter" android:host="wallet" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>''',
+    ),
+    // Since Android 11, an app only sees the apps it says it looks for:
+    // the wallets the Sign in screen finds by their link schemes.
+    Patch(
+      marker: 'android:scheme="solana-wallet"',
+      find: '    <queries>\n',
+      replace: '''    <queries>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="solana-wallet" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="phantom" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="solflare" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" />
+        </intent>
+''',
+    ),
+    // The Mobile Wallet Adapter talks to the wallet over a WebSocket on
+    // localhost, which is plain ws://. Android blocks unencrypted traffic
+    // unless the app allows it, so allow it for localhost only.
+    Patch(
+      marker: 'android:networkSecurityConfig',
+      find: '<application\n',
+      replace: '<application\n        android:networkSecurityConfig="@xml/network_security_config"\n',
+    ),
   ]);
+  final securityConfig = File('${app.path}/android/app/src/main/res/xml/network_security_config.xml');
+  if (!securityConfig.existsSync()) {
+    securityConfig
+      ..createSync(recursive: true)
+      ..writeAsStringSync('''<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">localhost</domain>
+        <domain includeSubdomains="false">127.0.0.1</domain>
+    </domain-config>
+</network-security-config>
+''');
+    print('   wrote android/app/src/main/res/xml/network_security_config.xml');
+  }
 
   // local_auth shows the system biometric prompt, which needs a
   // FragmentActivity and, on Android 8 and below, an AppCompat theme.
@@ -163,6 +226,34 @@ void patchIos() {
       replace:
           '\t<key>NSFaceIDUsageDescription</key>\n'
           '\t<string>Face ID unlocks your Flutter Counter wallet.</string>\n'
+          '\t<key>CFBundleDisplayName</key>',
+    ),
+    // Wallet apps answer by opening fluttercounter://wallet/..., which
+    // app_links reads; Flutter's own deep linking stays off. The queried
+    // schemes are the wallets the Sign in screen looks for.
+    Patch(
+      marker: '<string>fluttercounter</string>',
+      find: '\t<key>CFBundleDisplayName</key>',
+      replace:
+          '\t<key>CFBundleURLTypes</key>\n'
+          '\t<array>\n'
+          '\t\t<dict>\n'
+          '\t\t\t<key>CFBundleURLName</key>\n'
+          '\t\t\t<string>com.keepdeploying.flutterCounter.wallet</string>\n'
+          '\t\t\t<key>CFBundleURLSchemes</key>\n'
+          '\t\t\t<array>\n'
+          '\t\t\t\t<string>fluttercounter</string>\n'
+          '\t\t\t</array>\n'
+          '\t\t</dict>\n'
+          '\t</array>\n'
+          '\t<key>FlutterDeepLinkingEnabled</key>\n'
+          '\t<false/>\n'
+          '\t<key>LSApplicationQueriesSchemes</key>\n'
+          '\t<array>\n'
+          '\t\t<string>phantom</string>\n'
+          '\t\t<string>solflare</string>\n'
+          '\t\t<string>keplrwallet</string>\n'
+          '\t</array>\n'
           '\t<key>CFBundleDisplayName</key>',
     ),
   ]);

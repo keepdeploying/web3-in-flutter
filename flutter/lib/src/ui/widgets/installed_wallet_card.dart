@@ -1,12 +1,15 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_counter_server/flutter_counter_server.dart' show RpcChainLookup, SignatureVerifier;
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:phosphor_icons/phosphor_icons.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../chains/networks.dart';
 import '../../state/app_state.dart';
+import '../../wallet/installed/mobile/wallet_browsers.dart';
 import '../../wallet/signing_explainer.dart';
 import '../theme.dart';
 import 'address_view.dart';
@@ -27,6 +30,10 @@ class InstalledWalletCard extends StatefulWidget {
 }
 
 class _InstalledWalletCardState extends State<InstalledWalletCard> {
+  /// Wallet browsers only matter in the Android and iOS apps.
+  static bool get _onPhone =>
+      !kIsWeb && (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS);
+
   bool signing = false;
 
   /// Checks test signatures the way the backend would.
@@ -46,10 +53,7 @@ class _InstalledWalletCardState extends State<InstalledWalletCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CardHeader(
-            title: '2. Use a wallet you have',
-            icon: PhosphorIconsDuotone.plugsConnected,
-          ),
+          CardHeader(title: '2. Use a wallet you have', icon: PhosphorIconsDuotone.plugsConnected),
           if (connected != null) ...[
             Row(
               children: [
@@ -113,6 +117,26 @@ class _InstalledWalletCardState extends State<InstalledWalletCard> {
                     ),
                 ],
               ),
+            if (_onPhone && WalletBrowser.forFamily(network.family).isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Text(
+                "Or open the web version in a wallet's browser, where it finds the wallet as it does on a desktop:",
+                style: theme.textTheme.bodySmall,
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final browser in WalletBrowser.forFamily(network.family))
+                    TextButton.icon(
+                      onPressed: () => launchUrl(browser.linkTo(), mode: LaunchMode.externalApplication),
+                      icon: const PhosphorIcon(PhosphorIconsRegular.globe, size: 18),
+                      label: Text('Open in ${browser.name}'),
+                    ),
+                ],
+              ),
+            ],
             if (connections.connecting case final wallet?) ...[
               const SizedBox(height: 8),
               Text('Approve the connection in ${wallet.name}.', style: theme.textTheme.bodySmall),
