@@ -1,11 +1,11 @@
 {
-    "name": "flutter_counter",
-    "short_name": "flutter_counter",
+    "name": "Flutter Counter",
+    "short_name": "Counter",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#5B5BD6",
+    "theme_color": "#5B5BD6",
+    "description": "Read, sign in and write on EVM, Solana, Sui, Cosmos and NEAR testnets from one Flutter app.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
