@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:blockchain_utils/blockchain_utils.dart';
 
-import '../../wallet/in_app_signer.dart';
+import '../../wallet/wallet_signer.dart';
 import '../counter_reader.dart';
 import '../counter_writer.dart';
 import 'solana_reader.dart';
@@ -17,7 +17,9 @@ class SolanaWriter extends CounterWriter {
   static const systemProgram = '11111111111111111111111111111111';
 
   @override
-  Future<TxResult> send(CounterAction action, InAppSigner signer, {OnTxStep? onStep}) async {
+  Future<TxResult> send(CounterAction action, WalletSigner wallet, {OnTxStep? onStep}) async {
+    if (wallet is! SolanaTransactionSigner) throw unsupported(wallet);
+    final signer = wallet;
     final watch = Stopwatch()..start();
     final programId = Base58Decoder.decode(network.counter);
     final user = Base58Decoder.decode(signer.address);
@@ -75,14 +77,20 @@ class SolanaWriter extends CounterWriter {
       ...shortVec(4), 1, 2, 0, 3, // its accounts: global, counter, user, system program
       ...shortVec(data.length), ...data,
     ];
-    final signature = signer.signEd25519(message);
-    final transaction = [...shortVec(1), ...signature, ...message];
+    // The transaction is the signatures followed by the message. The
+    // wallet fills in the one signature slot.
+    askToApprove(signer, onStep);
+    final transaction = await signer.signSolanaTransaction([
+      ...shortVec(1),
+      ...List.filled(64, 0),
+      ...message,
+    ], network);
     onStep?.call(
       TxStep(
-        'Sign it',
+        'Signed',
         detail:
-            'An ed25519 signature over the message bytes. The transaction is the signatures followed by the '
-            'message: ${transaction.length} bytes, well under the 1232-byte limit.',
+            'An ed25519 signature over the message bytes, in front of the message: ${transaction.length} bytes, '
+            'well under the 1232-byte limit.',
         code: base64Encode(transaction),
       ),
     );

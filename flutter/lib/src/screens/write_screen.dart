@@ -14,6 +14,7 @@ import '../ui/widgets/screen_layout.dart';
 import '../ui/widgets/shimmer.dart';
 import '../ui/widgets/whats_happening.dart';
 import '../wallet/in_app_signer.dart';
+import '../wallet/wallet_signer.dart';
 
 /// Changes your counter on the selected network: increment, decrement or
 /// reset. Each one is a transaction your wallet signs and pays a small fee
@@ -44,10 +45,12 @@ class _WriteScreenState extends State<WriteScreen> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     final state = AppScope.of(context);
-    final address = state.wallet.keyFor(state.network.family)?.address;
+    final address = state.signer?.address;
     final id = address == null ? null : '${state.network.id}:$address';
     if (id != loadedFor) {
       loadedFor = id;
+      // Steps of a transaction on another network or account don't apply.
+      if (!busy) steps = const [];
       value = null;
       balance = null;
       readError = null;
@@ -73,8 +76,8 @@ class _WriteScreenState extends State<WriteScreen> {
   Future<void> send(CounterAction action) async {
     final state = AppScope.of(context);
     final network = state.network;
-    final signer = state.wallet.signerFor(network.family);
-    if (signer is! InAppSigner) return;
+    final signer = state.signer;
+    if (signer == null) return;
     final writer = CounterWriter.forNetwork(network, state.services.pool(network));
     final reader = state.services.reader(network);
     final before = value;
@@ -89,8 +92,12 @@ class _WriteScreenState extends State<WriteScreen> {
       setState(() {
         steps = [
           ...steps.where((s) => s.status != StepStatus.active),
-          HappeningStep(title: step.title, detail: step.detail, code: step.code, status: StepStatus.done),
-          const HappeningStep(title: 'Working...', status: StepStatus.active),
+          if (step.waitsForUser)
+            HappeningStep(title: step.title, detail: step.detail, status: StepStatus.active)
+          else ...[
+            HappeningStep(title: step.title, detail: step.detail, code: step.code, status: StepStatus.done),
+            const HappeningStep(title: 'Working...', status: StepStatus.active),
+          ],
         ];
       });
     }
@@ -139,13 +146,13 @@ class _WriteScreenState extends State<WriteScreen> {
   Widget build(BuildContext context) {
     final state = AppScope.of(context);
     final network = state.network;
-    final unlocked = state.wallet.status == WalletStatus.unlocked;
+    final signer = state.signer;
 
     return ScreenLayout(
       title: 'Change your counter',
       subtitle: 'Each change is a transaction your wallet signs and pays a small fee for.',
       aside: WhatsHappeningCard(steps: steps),
-      children: [unlocked ? _counterCard(context, network) : _noWalletCard(context)],
+      children: [signer != null ? _counterCard(context, network, signer) : _noWalletCard(context)],
     );
   }
 
@@ -156,7 +163,7 @@ class _WriteScreenState extends State<WriteScreen> {
         const CardHeader(title: 'A wallet signs every change', icon: PhosphorIconsDuotone.wallet),
         const Text(
           'Reading is free and needs no wallet, but changing the counter is a transaction: your key signs it and '
-          'your account pays the fee. Create, import or unlock the in-app wallet first.',
+          'your account pays the fee. Unlock the in-app wallet, or connect one you have on the Sign in screen.',
         ),
         const SizedBox(height: 16),
         FilledButton.icon(
@@ -168,7 +175,7 @@ class _WriteScreenState extends State<WriteScreen> {
     ),
   );
 
-  Widget _counterCard(BuildContext context, Network network) {
+  Widget _counterCard(BuildContext context, Network network, WalletSigner signer) {
     final theme = Theme.of(context);
     final accent = accentOf(network);
     final noFunds = balance == BigInt.zero;
@@ -237,7 +244,9 @@ class _WriteScreenState extends State<WriteScreen> {
             const LinearProgressIndicator(),
             const SizedBox(height: 4),
             Text(
-              'Building, signing and sending. Follow each step in "What\'s happening".',
+              signer is InAppSigner
+                  ? 'Building, signing and sending. Follow each step in "What\'s happening".'
+                  : 'Approve it in ${signer.name}, then follow each step in "What\'s happening".',
               style: theme.textTheme.bodySmall,
             ),
           ],

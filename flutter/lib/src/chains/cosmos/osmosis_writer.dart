@@ -1,10 +1,11 @@
 import 'dart:convert';
 
-import 'package:blockchain_utils/blockchain_utils.dart';
-
-import '../../wallet/in_app_signer.dart';
+import '../../wallet/wallet_signer.dart';
 import '../counter_reader.dart';
 import '../counter_writer.dart';
+import 'proto.dart';
+
+export 'proto.dart';
 
 /// Executes the CosmWasm counter with `{"increment":{}}` and friends, in a
 /// Cosmos SDK transaction signed in "direct" mode.
@@ -14,7 +15,9 @@ class OsmosisWriter extends CounterWriter {
   static const denom = 'uosmo';
 
   @override
-  Future<TxResult> send(CounterAction action, InAppSigner signer, {OnTxStep? onStep}) async {
+  Future<TxResult> send(CounterAction action, WalletSigner wallet, {OnTxStep? onStep}) async {
+    if (wallet is! CosmosDirectSigner) throw unsupported(wallet);
+    final signer = wallet;
     final watch = Stopwatch()..start();
 
     // 1. The message: MsgExecuteContract, wrapped in a protobuf Any.
@@ -69,18 +72,17 @@ class OsmosisWriter extends CounterWriter {
     );
 
     // 4. Sign the SignDoc: body, auth info, chain ID and account number.
-    final authInfo = _authInfo(signer, sequence, gas: gas, fee: fee);
-    final signDoc = Proto.message([
-      Proto.bytes(1, body),
-      Proto.bytes(2, authInfo),
-      Proto.string(3, network.chainId),
-      Proto.uint(4, accountNumber),
-    ]);
-    final signature = signer.signSecp256k1(QuickCrypto.sha256Hash(signDoc));
-    final txBytes = _txRaw(body, authInfo, [signature]);
+    askToApprove(signer, onStep);
+    final signed = await signer.signDirect(
+      body: body,
+      authInfo: _authInfo(signer, sequence, gas: gas, fee: fee),
+      network: network,
+      accountNumber: accountNumber,
+    );
+    final txBytes = _txRaw(signed.body, signed.authInfo, [signed.signature]);
     onStep?.call(
       TxStep(
-        'Sign it',
+        'Signed',
         detail:
             'sha256 of the SignDoc (body, auth info, chain ID ${network.chainId}, account number), signed with '
             'secp256k1, low-S. The chain ID and sequence stop the transaction from being replayed.',
@@ -117,10 +119,10 @@ class OsmosisWriter extends CounterWriter {
   }
 
   /// AuthInfo: who signs (public key, sign mode, sequence) and the fee.
-  static List<int> _authInfo(InAppSigner signer, int sequence, {required int gas, required int fee}) {
+  static List<int> _authInfo(CosmosDirectSigner signer, int sequence, {required int gas, required int fee}) {
     final publicKey = Proto.any(
       '/cosmos.crypto.secp256k1.PubKey',
-      Proto.message([Proto.bytes(1, signer.key.publicKey)]),
+      Proto.message([Proto.bytes(1, signer.publicKey)]),
     );
     final signerInfo = Proto.message([
       Proto.bytes(1, publicKey),
@@ -145,38 +147,4 @@ class OsmosisWriter extends CounterWriter {
     for (final s in signatures) Proto.bytes(3, s),
     if (signatures.isEmpty) Proto.bytes(3, const []),
   ]);
-}
-
-/// Just enough protobuf to build a Cosmos transaction.
-///
-/// Each field is a key (field number and wire type) then the value: a
-/// varint for numbers, or a varint length and the bytes for strings,
-/// bytes and nested messages. Fields with default values (0, empty) are
-/// left out, as protobuf encoders do.
-abstract final class Proto {
-  static List<int> message(List<List<int>> fields) => [for (final f in fields) ...f];
-
-  static List<int> uint(int field, int value) => value == 0 ? const [] : [..._varint(field << 3), ..._varint(value)];
-
-  static List<int> bytes(int field, List<int> value) => [
-    ..._varint(field << 3 | 2),
-    ..._varint(value.length),
-    ...value,
-  ];
-
-  static List<int> string(int field, String value) => value.isEmpty ? const [] : bytes(field, utf8.encode(value));
-
-  /// google.protobuf.Any: a type URL and the encoded message.
-  static List<int> any(String typeUrl, List<int> value) => message([string(1, typeUrl), bytes(2, value)]);
-
-  static List<int> _varint(int value) {
-    final out = <int>[];
-    do {
-      var byte = value & 0x7f;
-      value >>= 7;
-      if (value != 0) byte |= 0x80;
-      out.add(byte);
-    } while (value != 0);
-    return out;
-  }
 }

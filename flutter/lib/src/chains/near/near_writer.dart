@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:blockchain_utils/blockchain_utils.dart';
 
 import '../../wallet/in_app_signer.dart';
+import '../../wallet/wallet_signer.dart';
 import '../counter_reader.dart';
 import '../counter_writer.dart';
 
@@ -16,8 +17,25 @@ class NearWriter extends CounterWriter {
   static final gas = BigInt.from(30) * BigInt.from(10).pow(12);
 
   @override
-  Future<TxResult> send(CounterAction action, InAppSigner signer, {OnTxStep? onStep}) async {
+  Future<TxResult> send(CounterAction action, WalletSigner signer, {OnTxStep? onStep}) async {
     final watch = Stopwatch()..start();
+    if (signer is NearFunctionCaller) {
+      // An installed wallet builds, signs and sends the transaction itself.
+      askToApprove(signer, onStep);
+      final txId = await signer.callNearFunction(network, contract: network.counter, method: action.name);
+      onStep?.call(
+        TxStep(
+          'Executed',
+          detail:
+              '${signer.name} built the FunctionCall (${action.name}, no arguments, no deposit), signed it with '
+              'your key and sent it.',
+          code: txId,
+        ),
+      );
+      return TxResult(txId: txId, elapsed: watch.elapsed);
+    }
+    if (signer is! InAppSigner) throw unsupported(signer);
+
     final publicKey = 'ed25519:${Base58Encoder.encode(signer.key.publicKey)}';
 
     // Every key has its own nonce; each transaction must use a higher one.

@@ -3,9 +3,9 @@ import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:blockchain_utils/blockchain_utils.dart';
-import 'package:flutter_counter_server/flutter_counter_server.dart' show SuiPersonalMessage, uleb128;
+import 'package:flutter_counter_server/flutter_counter_server.dart' show uleb128;
 
-import '../../wallet/in_app_signer.dart';
+import '../../wallet/wallet_signer.dart';
 import '../counter_reader.dart';
 import '../counter_writer.dart';
 import '../deployments.g.dart';
@@ -20,7 +20,9 @@ class SuiWriter extends CounterWriter {
   static const budget = 10000000;
 
   @override
-  Future<TxResult> send(CounterAction action, InAppSigner signer, {OnTxStep? onStep}) async {
+  Future<TxResult> send(CounterAction action, WalletSigner wallet, {OnTxStep? onStep}) async {
+    if (wallet is! SuiTransactionSigner) throw unsupported(wallet);
+    final signer = wallet;
     final watch = Stopwatch()..start();
 
     // 1. What the transaction needs from the network: the Registry's
@@ -83,15 +85,15 @@ class SuiWriter extends CounterWriter {
 
     // 3. Sign: blake2b-256 of the intent (transaction data, V0, Sui) and
     //    the bytes, with ed25519.
-    final digest = QuickCrypto.blake2b256Hash([0, 0, 0, ...transaction]);
-    final signature = SuiPersonalMessage.serialize(signer.signEd25519(digest), signer.key.publicKey);
+    askToApprove(signer, onStep);
+    final signed = await signer.signSuiTransaction(transaction, network);
     onStep?.call(
       TxStep(
-        'Sign it',
+        'Signed',
         detail:
             'Intent [0, 0, 0] (transaction data, version 0, Sui) before the bytes, so a transaction signature '
             'can never pass as a personal message signature, or the other way round.',
-        code: signature,
+        code: signed.signature,
       ),
     );
 
@@ -104,8 +106,8 @@ class SuiWriter extends CounterWriter {
         }
       }''',
       {
-        'tx': base64Encode(transaction),
-        'sigs': [signature],
+        'tx': signed.bytes,
+        'sigs': [signed.signature],
       },
     );
     final effects = (result['executeTransaction'] as Map)['effects'] as Map;

@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import '../backend/backend.dart';
 import '../chains/networks.dart';
 import '../ui/widgets/whats_happening.dart';
+import '../wallet/in_app_signer.dart';
 import '../wallet/wallet_signer.dart';
 
 /// What happened when an old signature was sent again.
@@ -30,6 +31,7 @@ class SessionController extends ChangeNotifier {
   bool _busy = false;
   Challenge? _lastChallenge;
   SignedMessage? _lastSigned;
+  WalletSigner? _signer;
   SignInLevel? _lastLevel;
   String? _lastChainId;
   ReplayOutcome? _replay;
@@ -39,6 +41,9 @@ class SessionController extends ChangeNotifier {
   Session? get session => _session;
   bool get busy => _busy;
   bool get signedIn => _session != null;
+
+  /// Who signed in, or signed the last attempt.
+  WalletSigner? get signer => _signer;
 
   /// The message the backend asked for last, to show in the preview.
   Challenge? get lastChallenge => _lastChallenge;
@@ -79,12 +84,13 @@ class SessionController extends ChangeNotifier {
       nearNonce: challenge.nearNonce == null ? null : base64Decode(challenge.nearNonce!),
     );
     _lastSigned = signed;
+    _signer = signer;
     _lastLevel = level;
     _lastChainId = network.chainId;
     _replay = null;
     steps.add(
       HappeningStep(
-        title: 'Signed it with the ${signer.name.toLowerCase()}',
+        title: 'Signed it with ${signer is InAppSigner ? 'the in-app wallet' : signer.name}',
         detail: 'Only the signature goes to the backend. The private key never leaves the wallet.',
         code: signed.signature,
         status: StepStatus.done,
@@ -130,6 +136,7 @@ class SessionController extends ChangeNotifier {
     _token = null;
     _session = null;
     _lastSigned = null;
+    _signer = null;
     _lastChallenge = null;
     _replay = null;
     notifyListeners();

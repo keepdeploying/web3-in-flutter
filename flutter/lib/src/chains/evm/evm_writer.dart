@@ -1,6 +1,7 @@
 import 'package:blockchain_utils/blockchain_utils.dart';
 
 import '../../wallet/in_app_signer.dart';
+import '../../wallet/wallet_signer.dart';
 import '../counter_reader.dart';
 import '../counter_writer.dart';
 import 'evm_reader.dart';
@@ -11,9 +12,8 @@ class EvmWriter extends CounterWriter {
   EvmWriter(super.network, super.pool);
 
   @override
-  Future<TxResult> send(CounterAction action, InAppSigner signer, {OnTxStep? onStep}) async {
+  Future<TxResult> send(CounterAction action, WalletSigner signer, {OnTxStep? onStep}) async {
     final watch = Stopwatch()..start();
-    final from = signer.address;
     final data = EvmReader.selector('${action.name}()');
     onStep?.call(
       TxStep(
@@ -24,6 +24,45 @@ class EvmWriter extends CounterWriter {
         code: data,
       ),
     );
+
+    final String txHash;
+    if (signer is EvmTransactionSender) {
+      // An installed wallet does steps 1 to 3 itself: it picks the nonce,
+      // gas and fees, shows them to the user, signs and sends.
+      askToApprove(signer, onStep);
+      txHash = await signer.sendEvmTransaction(network, to: network.counter, data: data);
+      onStep?.call(
+        TxStep(
+          'Sent by ${signer.name}',
+          detail:
+              'eth_sendTransaction with only from, to and data. ${signer.name} filled in the nonce, gas and fees, '
+              'signed it and sent it to its own RPC node.',
+          code: txHash,
+        ),
+      );
+    } else if (signer is InAppSigner) {
+      txHash = await _signAndSend(signer, data, onStep);
+    } else {
+      throw unsupported(signer);
+    }
+
+    // 4. Wait for the receipt: the transaction is in a block and executed.
+    final receipt = await CounterWriter.waitFor(
+      () async => await pool.jsonRpc('eth_getTransactionReceipt', [txHash]) as Map<String, dynamic>?,
+    );
+    if (receipt['status'] != '0x1') throw const TxException('The transaction reverted.');
+    onStep?.call(
+      TxStep(
+        'Included in block ${_int(receipt['blockNumber'] as String)}',
+        detail: 'Status 1 (success), ${_int(receipt['gasUsed'] as String)} gas used.${_changeOf(receipt)}',
+      ),
+    );
+    return TxResult(txId: txHash, elapsed: watch.elapsed);
+  }
+
+  /// Steps 1 to 3 with the app's own key.
+  Future<String> _signAndSend(InAppSigner signer, String data, OnTxStep? onStep) async {
+    final from = signer.address;
 
     // 1. What the transaction needs from the network.
     final results = await Future.wait([
@@ -85,18 +124,7 @@ class EvmWriter extends CounterWriter {
     final txHash = await pool.jsonRpc('eth_sendRawTransaction', [rawHex]) as String;
     onStep?.call(TxStep('Send it', detail: 'eth_sendRawTransaction returned the transaction hash.', code: txHash));
 
-    // 4. Wait for the receipt: the transaction is in a block and executed.
-    final receipt = await CounterWriter.waitFor(
-      () async => await pool.jsonRpc('eth_getTransactionReceipt', [txHash]) as Map<String, dynamic>?,
-    );
-    if (receipt['status'] != '0x1') throw const TxException('The transaction reverted.');
-    onStep?.call(
-      TxStep(
-        'Included in block ${_int(receipt['blockNumber'] as String)}',
-        detail: 'Status 1 (success), ${_int(receipt['gasUsed'] as String)} gas used.${_changeOf(receipt)}',
-      ),
-    );
-    return TxResult(txId: txHash, elapsed: watch.elapsed);
+    return txHash;
   }
 
   /// The CounterChanged event in the receipt, as text.

@@ -3,6 +3,7 @@ import 'package:phosphor_icons/phosphor_icons.dart';
 
 import '../state/app_state.dart';
 import '../ui/widgets/glass.dart';
+import '../ui/widgets/installed_wallet_card.dart';
 import '../ui/widgets/descriptions_card.dart';
 import '../ui/widgets/screen_layout.dart';
 import '../ui/widgets/sign_in_card.dart';
@@ -29,7 +30,7 @@ class _AuthScreenState extends State<AuthScreen> {
   List<HappeningStep>? steps;
 
   static const overview = [
-    HappeningStep(title: 'Connect a signer', detail: 'Unlock or create the in-app wallet above.'),
+    HappeningStep(title: 'Connect a signer', detail: 'Unlock the in-app wallet, or connect one you have.'),
     HappeningStep(
       title: 'Get a challenge',
       detail: 'The backend writes the message to sign. Levels 2 and 3 add a one-time nonce.',
@@ -53,16 +54,8 @@ class _AuthScreenState extends State<AuthScreen> {
       aside: WhatsHappeningCard(steps: steps ?? overview),
       children: [
         InAppWalletCard(onSteps: (value) => setState(() => steps = value)),
-        const _BranchCard(
-          number: 2,
-          icon: PhosphorIconsRegular.deviceMobile,
-          title: 'Use a wallet on this device',
-          body:
-              'Talk to wallets you already have, with no SDK: Phantom and Solflare deep links and the '
-              'Mobile Wallet Adapter on phones, and browser extensions on the web.',
-          action: 'Connect an installed wallet',
-        ),
-        const _BranchCard(
+        InstalledWalletCard(onSteps: (value) => setState(() => steps = value)),
+        const _SdkCard(
           number: 3,
           icon: PhosphorIconsRegular.puzzlePiece,
           title: 'Use an SDK',
@@ -78,8 +71,8 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 }
 
-class _BranchCard extends StatelessWidget {
-  const _BranchCard({
+class _SdkCard extends StatelessWidget {
+  const _SdkCard({
     required this.number,
     required this.icon,
     required this.title,

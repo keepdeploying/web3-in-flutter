@@ -18,7 +18,7 @@ import 'network_logo.dart';
 import 'shimmer.dart';
 import 'whats_happening.dart';
 
-/// Branch A, "be the wallet": create, import, unlock and use the in-app
+/// Option 1, "be the wallet": create, import, unlock and use the in-app
 /// wallet. [onSteps] receives "What's happening" steps for the screen.
 class InAppWalletCard extends StatefulWidget {
   const InAppWalletCard({super.key, required this.onSteps});

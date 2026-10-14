@@ -20,7 +20,7 @@ class SignInCard extends StatelessWidget {
     final state = AppScope.of(context);
     final session = state.session;
     final theme = Theme.of(context);
-    final signer = state.wallet.signerFor(state.network.family);
+    final signer = state.signer;
 
     Future<void> run(Future<List<HappeningStep>> Function() attempt) async {
       try {
@@ -95,7 +95,7 @@ class SignInCard extends StatelessWidget {
                     : const Icon(PhosphorIconsRegular.signIn, size: 18),
                 label: Text(
                   signer == null
-                      ? 'Sign in (unlock a wallet first)'
+                      ? 'Sign in (connect a wallet first)'
                       : session.signedIn
                       ? 'Sign in again'
                       : 'Sign in as ${shortAddress(signer.address)}',
@@ -126,7 +126,7 @@ class SignInCard extends StatelessWidget {
     final last = state.session.lastChallenge;
     if (last != null && last.level == state.signInLevel) return last.message;
     const nonce = 'chosen-by-the-server';
-    final address = state.wallet.keyFor(state.network.family)?.address ?? 'your address';
+    final address = state.signer?.address ?? 'your address';
     final now = DateTime.now().toUtc();
     return switch (state.signInLevel) {
       SignInLevel.fixed => SignInMessages.fixed(),

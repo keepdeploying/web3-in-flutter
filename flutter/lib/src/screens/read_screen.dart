@@ -228,7 +228,7 @@ class _ReadScreenState extends State<ReadScreen> {
                   ),
                 ],
                 const SizedBox(height: 4),
-                if (AppScope.of(context).wallet.keyFor(network.family) case final key?)
+                if (AppScope.of(context).signerFor(network.family) case final key?)
                   TextButton.icon(
                     style: TextButton.styleFrom(padding: EdgeInsets.zero),
                     onPressed: () => loadAccount(key.address),

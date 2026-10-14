@@ -3,11 +3,14 @@ import 'package:http/http.dart' as http;
 
 import '../backend/backend.dart';
 import '../chains/networks.dart';
+import '../wallet/wallet_signer.dart';
+import 'connection_controller.dart';
 import 'services.dart';
 import 'session_controller.dart';
 import 'wallet_controller.dart';
 
 export '../backend/backend.dart' show SignInLevel;
+export 'connection_controller.dart';
 export 'session_controller.dart';
 export 'wallet_controller.dart';
 
@@ -53,25 +56,47 @@ extension SignInLevelText on SignInLevel {
 /// It's a plain [ChangeNotifier]: widgets that read it rebuild when it calls
 /// [notifyListeners]. No state-management package needed.
 class AppState extends ChangeNotifier {
-  AppState({ChainServices? services, WalletController? wallet, LocalBackend? localBackend, this.httpClient})
-    : services = services ?? ChainServices(),
-      wallet = wallet ?? WalletController(),
-      localBackend = localBackend ?? LocalBackend() {
-    // Widgets that watch the app state also rebuild when the wallet or the
-    // session changes.
+  AppState({
+    ChainServices? services,
+    WalletController? wallet,
+    ConnectionController? connections,
+    LocalBackend? localBackend,
+    this.httpClient,
+  }) : services = services ?? ChainServices(),
+       wallet = wallet ?? WalletController(),
+       connections = connections ?? ConnectionController(),
+       localBackend = localBackend ?? LocalBackend() {
+    // Widgets that watch the app state also rebuild when the wallets or the
+    // session change.
     this.wallet.addListener(notifyListeners);
+    this.connections.addListener(notifyListeners);
     session.addListener(notifyListeners);
-    // A locked or removed wallet can't keep a session: sign out.
-    this.wallet.addListener(() {
-      if (this.wallet.status != WalletStatus.unlocked) session.signOut();
-    });
+    // The session belongs to the signer that signed in. When the signer
+    // goes away (a locked wallet, a disconnected one), sign out.
+    void checkSigner() {
+      final signedIn = session.signer;
+      if (signedIn != null && signerFor(signedIn.family) != signedIn) session.signOut();
+    }
+
+    this.wallet.addListener(checkSigner);
+    this.connections.addListener(checkSigner);
   }
 
   /// The RPC pools and counter readers for every network.
   final ChainServices services;
 
-  /// The in-app wallet (branch A).
+  /// The in-app wallet.
   final WalletController wallet;
+
+  /// Wallets installed on this device, and accounts connected from them.
+  final ConnectionController connections;
+
+  /// Who signs for [family]: a connected installed wallet if there is one,
+  /// otherwise the in-app wallet while it is unlocked.
+  WalletSigner? signerFor(ChainFamily family) => connections.signerFor(family) ?? wallet.signerFor(family);
+
+  /// Who signs on the selected network.
+  WalletSigner? get signer => signerFor(network.family);
 
   /// Who is signed in to the backend, and the last sign-in attempt.
   final session = SessionController();

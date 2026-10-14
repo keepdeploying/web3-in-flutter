@@ -3,16 +3,18 @@ import 'dart:convert';
 import 'package:blockchain_utils/blockchain_utils.dart';
 import 'package:flutter_counter_server/flutter_counter_server.dart';
 
+import '../chains/cosmos/proto.dart';
+import '../chains/networks.dart';
 import 'hd_keys.dart';
 import 'wallet_signer.dart';
 
-/// Signs with a private key the app holds itself (branch A, "be the wallet").
+/// Signs with a private key the app holds itself ("be the wallet").
 ///
 /// It does exactly what a wallet app does when you approve a request: wrap
 /// the message in the chain's format, hash it, and sign the hash with the
 /// key. The wrapping lives in the server package, so the backend checks the
 /// very same bytes.
-class InAppSigner implements WalletSigner {
+class InAppSigner implements SolanaTransactionSigner, SuiTransactionSigner, CosmosDirectSigner {
   InAppSigner(this.key, {this.recipient = defaultRecipient, List<int> Function()? nonce})
     : _nonce = nonce ?? (() => QuickCrypto.generateRandom(32));
 
@@ -93,6 +95,45 @@ class InAppSigner implements WalletSigner {
         nonce: nonce,
         recipient: recipient,
       );
+
+  // Transactions on the chains whose wallets sign what the app built.
+
+  @override
+  Future<List<int>> signSolanaTransaction(List<int> transaction, Network network) async {
+    // One signer, so the transaction starts with one signature slot (a
+    // length byte, then 64 zero bytes). The message follows it.
+    final message = transaction.sublist(65);
+    return [1, ...signEd25519(message), ...message];
+  }
+
+  @override
+  Future<({String bytes, String signature})> signSuiTransaction(List<int> transactionData, Network network) async {
+    // blake2b-256 of the intent (transaction data, V0, Sui) and the bytes.
+    final digest = QuickCrypto.blake2b256Hash([0, 0, 0, ...transactionData]);
+    return (
+      bytes: base64Encode(transactionData),
+      signature: SuiPersonalMessage.serialize(signEd25519(digest), key.publicKey),
+    );
+  }
+
+  @override
+  List<int> get publicKey => key.publicKey;
+
+  @override
+  Future<({List<int> body, List<int> authInfo, List<int> signature})> signDirect({
+    required List<int> body,
+    required List<int> authInfo,
+    required Network network,
+    required int accountNumber,
+  }) async {
+    final signDoc = Proto.signDoc(
+      body: body,
+      authInfo: authInfo,
+      chainId: network.chainId,
+      accountNumber: accountNumber,
+    );
+    return (body: body, authInfo: authInfo, signature: signSecp256k1(QuickCrypto.sha256Hash(signDoc)));
+  }
 
   // Raw signing, for transactions. Each chain decides what to hash; these
   // only apply the key. A wallet app runs the same three operations when
