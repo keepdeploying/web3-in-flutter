@@ -19,11 +19,11 @@ FLUTTER="${FLUTTER:-flutter}"
 ROOT="$(git rev-parse --show-toplevel)"
 cd "$ROOT"
 
-# The platform folders aren't committed. Generate them if they're missing.
-if [ ! -d flutter/android ]; then
-  echo "flutter/android is missing. Generating the platform folders first..."
-  dart run tool/setup_platforms.dart
-fi
+# The platform folders aren't committed. Generate or update them every time:
+# the script skips what is already done, and a half-finished earlier run
+# (or a newer version of the script) would otherwise go unnoticed.
+echo "Setting up the platform folders..."
+dart run tool/setup_platforms.dart
 
 cd flutter
 
