@@ -29,6 +29,9 @@ class HomeShell extends StatefulWidget {
 class _HomeShellState extends State<HomeShell> {
   int index = 0;
 
+  /// The widest the rail, header and content get together.
+  static const maxFrameWidth = 1440.0;
+
   /// The four destinations. The icon is drawn regular, and filled when selected.
   static const destinations = <({IconData icon, IconData selected, String label})>[
     (icon: PhosphorIconsRegular.magnifyingGlass, selected: PhosphorIconsFill.magnifyingGlass, label: 'Read'),
@@ -70,11 +73,23 @@ class _HomeShellState extends State<HomeShell> {
         extendBody: true,
         body: size.isCompact
             ? SafeArea(bottom: false, child: content)
-            : Row(
-                children: [
-                  _GlassRail(index: index, onSelected: goTo),
-                  Expanded(child: SafeArea(left: false, child: content)),
-                ],
+            // On very wide windows the rail, header and content stay together
+            // in the middle, instead of drifting to the far edges.
+            : LayoutBuilder(
+                builder: (context, constraints) {
+                  final floating = constraints.maxWidth > maxFrameWidth;
+                  return Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: maxFrameWidth),
+                      child: Row(
+                        children: [
+                          _GlassRail(index: index, onSelected: goTo, floating: floating),
+                          Expanded(child: SafeArea(left: false, child: content)),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
         bottomNavigationBar: size.isCompact
             ? GlassBar(
@@ -100,16 +115,21 @@ class _HomeShellState extends State<HomeShell> {
 /// The navigation rail of tablets and large windows: icons with labels
 /// under them, and the app's icon at the top.
 class _GlassRail extends StatelessWidget {
-  const _GlassRail({required this.index, required this.onSelected});
+  const _GlassRail({required this.index, required this.onSelected, required this.floating});
 
   final int index;
   final ValueChanged<int> onSelected;
+
+  /// Whether the rail stands away from the window's edge, so it needs a
+  /// border on both sides.
+  final bool floating;
 
   @override
   Widget build(BuildContext context) {
     final short = WindowSize.isShort(context);
     return GlassBar(
       vertical: true,
+      bothSides: floating,
       child: SafeArea(
         right: false,
         // On a short window (a phone in landscape) the rail scrolls rather than

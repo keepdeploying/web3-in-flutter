@@ -96,6 +96,9 @@ void main() {
       final rail = tester.widget<NavigationRail>(find.byType(NavigationRail));
       expect(rail.extended, isFalse, reason: '$size');
       expect(rail.labelType, NavigationRailLabelType.all, reason: '$size');
+      // Past 1440 px the rail, header and content stay together in the middle.
+      final left = tester.getTopLeft(find.byType(NavigationRail)).dx;
+      expect(left, size.width > 1440 ? (size.width - 1440) / 2 : 0, reason: '$size');
     }
   });
 

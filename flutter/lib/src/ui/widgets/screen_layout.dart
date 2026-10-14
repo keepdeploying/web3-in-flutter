@@ -13,8 +13,9 @@ class ScreenLayout extends StatelessWidget {
 
   final List<Widget> children;
 
-  /// The "What's happening" card. Leave it out for a screen that has none, and
-  /// the main column centers.
+  /// The "What's happening" card. Leave it out for a screen that has none.
+  /// On an expanded window its place stays empty, so the main column lines up
+  /// with the other screens'.
   final Widget? aside;
 
   final String? title;
@@ -29,7 +30,7 @@ class ScreenLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final sidePanel = aside != null && WindowSize.of(context).isExpanded;
+    final sidePanel = WindowSize.of(context).isExpanded;
     // The glass bottom bar floats over the page (the shell extends the body
     // behind it), so the last card needs room to scroll clear of it.
     final bottom = MediaQuery.paddingOf(context).bottom + 24;
@@ -80,10 +81,12 @@ class ScreenLayout extends StatelessWidget {
             const SizedBox(width: gap),
             SizedBox(
               width: asideWidth,
-              child: ListView(
-                padding: EdgeInsets.only(top: 8, bottom: bottom),
-                children: [aside!],
-              ),
+              child: aside == null
+                  ? null
+                  : ListView(
+                      padding: EdgeInsets.only(top: 8, bottom: bottom),
+                      children: [aside!],
+                    ),
             ),
           ],
         ),

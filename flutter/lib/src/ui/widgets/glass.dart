@@ -133,13 +133,16 @@ class GlassCard extends StatelessWidget {
 /// A frosted strip for the navigation bar and the navigation rail: the same
 /// blur as [GlassCard], over the colorful background.
 class GlassBar extends StatelessWidget {
-  const GlassBar({super.key, required this.child, this.vertical = false});
+  const GlassBar({super.key, required this.child, this.vertical = false, this.bothSides = false});
 
   final Widget child;
 
   /// Whether this is a side rail (a divider on its right) instead of a bottom
   /// bar (a divider on top).
   final bool vertical;
+
+  /// For a rail away from the window's edge: a divider on its left too.
+  final bool bothSides;
 
   @override
   Widget build(BuildContext context) {
@@ -151,7 +154,9 @@ class GlassBar extends StatelessWidget {
         child: DecoratedBox(
           decoration: BoxDecoration(
             color: scheme.surface.withValues(alpha: 0.7),
-            border: vertical ? Border(right: divider) : Border(top: divider),
+            border: vertical
+                ? Border(right: divider, left: bothSides ? divider : BorderSide.none)
+                : Border(top: divider),
           ),
           child: child,
         ),
