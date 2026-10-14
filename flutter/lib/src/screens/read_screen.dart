@@ -222,12 +222,20 @@ class _ReadScreenState extends State<ReadScreen> {
                   ),
                 ],
                 const SizedBox(height: 4),
-                TextButton.icon(
-                  style: TextButton.styleFrom(padding: EdgeInsets.zero),
-                  onPressed: widget.onSetUpWallet,
-                  icon: const Icon(Icons.key, size: 16),
-                  label: const Text('Or set up your own wallet'),
-                ),
+                if (AppScope.of(context).wallet.keyFor(network.family) case final key?)
+                  TextButton.icon(
+                    style: TextButton.styleFrom(padding: EdgeInsets.zero),
+                    onPressed: () => loadAccount(key.address),
+                    icon: const Icon(Icons.person_outline, size: 16),
+                    label: const Text('Look up my account'),
+                  )
+                else
+                  TextButton.icon(
+                    style: TextButton.styleFrom(padding: EdgeInsets.zero),
+                    onPressed: widget.onSetUpWallet,
+                    icon: const Icon(Icons.key, size: 16),
+                    label: const Text('Or set up your own wallet'),
+                  ),
               ],
             ),
           ),

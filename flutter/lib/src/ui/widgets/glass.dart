@@ -115,7 +115,12 @@ class GlassCard extends StatelessWidget {
                     ],
                   ),
           ),
-          child: Padding(padding: padding, child: child),
+          // A transparent Material, so list tiles, chips and buttons inside the
+          // card draw their ink splashes on the card instead of under it.
+          child: Material(
+            type: MaterialType.transparency,
+            child: Padding(padding: padding, child: child),
+          ),
         ),
       ),
     );

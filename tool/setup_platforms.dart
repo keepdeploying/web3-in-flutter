@@ -70,6 +70,14 @@ void patchAndroid() {
           '<manifest xmlns:android="http://schemas.android.com/apk/res/android">\n'
           '    <uses-permission android:name="android.permission.INTERNET" />',
     ),
+    // local_auth (fingerprint, face or PIN to unlock the in-app wallet).
+    Patch(
+      marker: 'android.permission.USE_BIOMETRIC',
+      find: '<uses-permission android:name="android.permission.INTERNET" />',
+      replace:
+          '<uses-permission android:name="android.permission.INTERNET" />\n'
+          '    <uses-permission android:name="android.permission.USE_BIOMETRIC" />',
+    ),
     Patch(
       marker: 'android:allowBackup="false"',
       find: '<application\n',
@@ -81,6 +89,23 @@ void patchAndroid() {
       replace: 'android:label="$appName"',
     ),
   ]);
+
+  // local_auth shows the system biometric prompt, which needs a
+  // FragmentActivity and, on Android 8 and below, an AppCompat theme.
+  edit('android/app/src/main/kotlin/com/keepdeploying/flutter_counter/MainActivity.kt', [
+    Patch(marker: 'FlutterFragmentActivity', find: 'FlutterActivity', replace: 'FlutterFragmentActivity', all: true),
+  ]);
+  for (final folder in ['values', 'values-night']) {
+    edit('android/app/src/main/res/$folder/styles.xml', [
+      Patch(
+        marker: 'name="LaunchTheme" parent="Theme.AppCompat.DayNight.NoActionBar"',
+        find: folder == 'values'
+            ? 'name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar"'
+            : 'name="LaunchTheme" parent="@android:style/Theme.Black.NoTitleBar"',
+        replace: 'name="LaunchTheme" parent="Theme.AppCompat.DayNight.NoActionBar"',
+      ),
+    ]);
+  }
 
   // Sign every build with the debug keystore committed in keys/, so an APK
   // from any machine installs over an earlier one. Testnet demo only.
@@ -113,9 +138,19 @@ void patchAndroid() {
 }
 
 void patchIos() {
-  // Nothing yet. Flutter's template already sets CFBundleDisplayName to
-  // "Flutter Counter". Wallet URL schemes are added in later milestones.
-  print('   nothing to patch yet');
+  // Face ID needs a reason shown to the user, or the app crashes when
+  // local_auth asks. (Flutter's template already sets CFBundleDisplayName to
+  // "Flutter Counter".)
+  edit('ios/Runner/Info.plist', [
+    Patch(
+      marker: 'NSFaceIDUsageDescription',
+      find: '\t<key>CFBundleDisplayName</key>',
+      replace:
+          '\t<key>NSFaceIDUsageDescription</key>\n'
+          '\t<string>Face ID unlocks your Flutter Counter wallet.</string>\n'
+          '\t<key>CFBundleDisplayName</key>',
+    ),
+  ]);
 }
 
 void patchMacos() {

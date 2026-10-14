@@ -51,11 +51,10 @@ class HdKeys {
   static String generateMnemonic() => Bip39MnemonicGenerator().fromWordsNumber(Bip39WordsNum.wordsNum12).toStr();
 
   /// Whether [mnemonic] is a valid BIP-39 phrase (word list and checksum).
-  static bool isValidMnemonic(String mnemonic) => Bip39MnemonicValidator().isValid(_normalize(mnemonic));
+  static bool isValidMnemonic(String mnemonic) => Bip39MnemonicValidator().isValid(normalize(mnemonic));
 
   /// Turns a recovery phrase into the 64-byte BIP-39 seed.
-  static List<int> seedFrom(String mnemonic) =>
-      Bip39SeedGenerator(Mnemonic.fromString(_normalize(mnemonic))).generate();
+  static List<int> seedFrom(String mnemonic) => Bip39SeedGenerator(Mnemonic.fromString(normalize(mnemonic))).generate();
 
   /// Derives the key for one chain family from a seed.
   static ChainKey derive(List<int> seed, ChainFamily family) {
@@ -97,5 +96,6 @@ class HdKeys {
     return {for (final f in ChainFamily.values) f: derive(seed, f)};
   }
 
-  static String _normalize(String mnemonic) => mnemonic.trim().toLowerCase().split(RegExp(r'\s+')).join(' ');
+  /// Lowercases the phrase and collapses whitespace to single spaces.
+  static String normalize(String mnemonic) => mnemonic.trim().toLowerCase().split(RegExp(r'\s+')).join(' ');
 }

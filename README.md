@@ -24,15 +24,15 @@ One Flutter app, **Flutter Counter**, that proves Flutter can be a complete Web3
 
 ## Repo Layout
 
-| Folder       | What it holds                                                                  |
-| ------------ | ------------------------------------------------------------------------------ |
-| `flutter/`   | The Flutter app                                                                |
-| `server/`    | Pure Dart backend: nonces, signature verifiers for every chain, sessions       |
-| `contracts/` | The counter contract for each chain, and `deployments.json` with every address |
-| `keys/`      | Public testnet keys: the dev recovery phrase and the Android debug keystore    |
-| `scripts/`   | Publish the web app to GitHub Pages and the APK to GitHub Releases             |
-| `tool/`      | Dart tools: `setup_platforms.dart` and `sync_deployments.dart`                 |
-| `DEPLOYS.md` | Log of every contract deploy, web deploy and APK release                       |
+| Folder       | What it holds                                                                                                                    |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| `flutter/`   | The Flutter app                                                                                                                  |
+| `server/`    | Pure Dart backend: nonces, signature verifiers for every chain, sessions                                                         |
+| `contracts/` | The counter contract for each chain, and `deployments.json` with every address                                                   |
+| `keys/`      | Public testnet keys: the dev recovery phrase and the Android debug keystore                                                      |
+| `scripts/`   | Publish the web app to GitHub Pages and the APK to GitHub Releases                                                               |
+| `tool/`      | `setup_platforms.dart`, `sync_deployments.dart`, and `verify_signatures/` (checks our signatures with each chain's JS libraries) |
+| `DEPLOYS.md` | Log of every contract deploy, web deploy and APK release                                                                         |
 
 The repo commits only source code and the files that declare dependencies. Platform folders (`flutter/android/`, `flutter/ios/`, and so on), build output and downloaded dependencies are generated on your machine.
 
@@ -40,7 +40,7 @@ The repo commits only source code and the files that declare dependencies. Platf
 
 - [Flutter](https://docs.flutter.dev/get-started/install) 3.47 or newer (Dart 3.13 or newer)
 - For each platform you want to run, its usual Flutter setup (Android Studio, Xcode, Visual Studio, or the Linux desktop packages)
-- On Linux: `libsecret-1-dev` (for secure storage)
+- On Linux: `libsecret-1-dev` to build, and a running keyring (GNOME Keyring or KWallet) to save the in-app wallet. Without a keyring, the wallet stays in memory until the app closes.
 
 You only need the chain toolchains (Foundry, Anchor, Sui CLI, and so on) if you want to redeploy contracts. See `contracts/README.md`.
 
@@ -55,7 +55,7 @@ cd flutter
 flutter run
 ```
 
-`tool/setup_platforms.dart` runs `flutter create` for Android, iOS, web, macOS, Windows and Linux. It then applies the changes this app needs, such as the Android INTERNET permission, macOS network access and the shared signing key. It is safe to run again.
+`tool/setup_platforms.dart` runs `flutter create` for Android, iOS, web, macOS, Windows and Linux. It then applies the changes this app needs, such as the Android INTERNET permission, macOS network access, the shared signing key, and what `local_auth` needs for fingerprint and Face ID unlock (a `FlutterFragmentActivity`, the `USE_BIOMETRIC` permission, an AppCompat launch theme and `NSFaceIDUsageDescription`). It is safe to run again.
 
 ## Run From Your IDE
 

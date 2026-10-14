@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../state/app_state.dart';
 import '../ui/theme.dart';
 import '../ui/widgets/glass.dart';
+import '../ui/widgets/wallet_card.dart';
 import '../ui/widgets/whats_happening.dart';
 import 'home_shell.dart';
 
@@ -14,8 +15,23 @@ import 'home_shell.dart';
 ///
 /// Whichever you pick, the rest of the app sees the same thing: a signer
 /// that has an address and can sign messages and send counter calls.
-class AuthScreen extends StatelessWidget {
+class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
+
+  @override
+  State<AuthScreen> createState() => _AuthScreenState();
+}
+
+class _AuthScreenState extends State<AuthScreen> {
+  /// Steps from the last thing the user did, like signing a test message.
+  List<HappeningStep>? steps;
+
+  static const overview = [
+    HappeningStep(title: 'Connect a signer', detail: 'Pick one of the three options above.'),
+    HappeningStep(title: 'Get a challenge', detail: 'The backend gives a one-time nonce (levels 2 and 3).'),
+    HappeningStep(title: 'Sign the message', detail: 'Your wallet signs it with your private key.'),
+    HappeningStep(title: 'Verify', detail: 'The backend recovers or checks the signer and the message.'),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -28,15 +44,7 @@ class AuthScreen extends StatelessWidget {
           'Each option ends in the same place: an address that can sign messages and transactions on '
           '${state.network.name}.',
         ),
-        const _BranchCard(
-          number: 1,
-          icon: Icons.shield_outlined,
-          title: 'Be the wallet',
-          body:
-              'Create or import a 12-word recovery phrase. The app derives a key for every chain, '
-              'stores it securely on this device, and signs by itself. Works on every platform.',
-          milestone: 'M6',
-        ),
+        InAppWalletCard(onSteps: (value) => setState(() => steps = value)),
         const _BranchCard(
           number: 2,
           icon: Icons.install_mobile_outlined,
@@ -84,18 +92,18 @@ class AuthScreen extends StatelessWidget {
                 child: SelectableText(_preview(state), style: monoStyle(context, size: 12.5)),
               ),
               const SizedBox(height: 16),
-              const FilledButton(onPressed: null, child: Text('Sign in (connect a wallet first)')),
+              FilledButton(
+                onPressed: null,
+                child: Text(
+                  state.wallet.status == WalletStatus.unlocked
+                      ? 'Sign in (arrives in M7)'
+                      : 'Sign in (connect a wallet first)',
+                ),
+              ),
             ],
           ),
         ),
-        const WhatsHappeningCard(
-          steps: [
-            HappeningStep(title: 'Connect a signer', detail: 'Pick one of the three options above.'),
-            HappeningStep(title: 'Get a challenge', detail: 'The backend gives a one-time nonce (levels 2 and 3).'),
-            HappeningStep(title: 'Sign the message', detail: 'Your wallet signs it with your private key.'),
-            HappeningStep(title: 'Verify', detail: 'The backend recovers or checks the signer and the message.'),
-          ],
-        ),
+        WhatsHappeningCard(steps: steps ?? overview),
       ],
     );
   }
@@ -105,7 +113,7 @@ class AuthScreen extends StatelessWidget {
     SigningLevel.nonce => 'Sign in to Flutter Counter\n\nNonce: 7Hq2k9Xa...',
     SigningLevel.standard =>
       'flutter-counter.app wants you to sign in with your ${state.network.family.label} account:\n'
-          '0x1234...abcd\n\n'
+          '${state.wallet.keyFor(state.network.family)?.address ?? 'your address'}\n\n'
           'Sign in to Flutter Counter.\n\n'
           'URI: https://flutter-counter.app\n'
           'Version: 1\n'

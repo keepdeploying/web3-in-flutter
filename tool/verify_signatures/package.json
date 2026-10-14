@@ -1,0 +1,17 @@
+{
+  "name": "verify-signatures",
+  "private": true,
+  "description": "Checks the in-app signer's signatures with each chain's own JavaScript libraries.",
+  "type": "module",
+  "scripts": {
+    "verify": "node verify.mjs"
+  },
+  "dependencies": {
+    "@keplr-wallet/cosmos": "^0.13.41",
+    "@mysten/sui": "^2.35.0",
+    "@near-wallet-selector/core": "^10.1.4",
+    "bs58": "^6.0.0",
+    "tweetnacl": "^1.0.3",
+    "viem": "^2.57.4"
+  }
+}

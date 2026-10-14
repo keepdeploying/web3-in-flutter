@@ -12,7 +12,12 @@ import 'src/ui/theme.dart';
 /// signed message, and changes the counter with transactions. A "What's
 /// happening" card on every screen explains each step.
 void main() {
-  runApp(FlutterCounterApp(state: AppState()));
+  // Platform channels (secure storage, biometrics) need the bindings first.
+  WidgetsFlutterBinding.ensureInitialized();
+  final state = AppState();
+  // Look for a saved wallet while the first frame draws.
+  state.wallet.start();
+  runApp(FlutterCounterApp(state: state));
 }
 
 class FlutterCounterApp extends StatelessWidget {

@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../chains/networks.dart';
 import 'services.dart';
+import 'wallet_controller.dart';
+
+export 'wallet_controller.dart';
 
 /// Where the app sends signed messages for verification.
 enum BackendMode {
@@ -33,10 +36,18 @@ enum SigningLevel {
 /// It's a plain [ChangeNotifier]: widgets that read it rebuild when it calls
 /// [notifyListeners]. No state-management package needed.
 class AppState extends ChangeNotifier {
-  AppState({ChainServices? services}) : services = services ?? ChainServices();
+  AppState({ChainServices? services, WalletController? wallet})
+    : services = services ?? ChainServices(),
+      wallet = wallet ?? WalletController() {
+    // Widgets that watch the app state also rebuild when the wallet changes.
+    this.wallet.addListener(notifyListeners);
+  }
 
   /// The RPC pools and counter readers for every network.
   final ChainServices services;
+
+  /// The in-app wallet (branch A).
+  final WalletController wallet;
 
   Network _network = Networks.sepolia;
   ThemeMode _themeMode = ThemeMode.system;
