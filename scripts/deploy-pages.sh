@@ -74,7 +74,7 @@ if git -C "$WORKTREE" diff --cached --quiet; then
   echo "Nothing changed since the last deploy."
 else
   COMMIT="$(git rev-parse --short HEAD)"
-  git -C "$WORKTREE" commit --quiet -m "Deploy from main at $COMMIT"
+  git -C "$WORKTREE" commit --quiet -m "chore(pages): deploy main at $COMMIT"
   git -C "$WORKTREE" push --quiet origin gh-pages
   OWNER="$(git remote get-url origin | sed -E 's#.*[:/]([^/]+)/[^/]+$#\1#')"
   URL="https://$OWNER.github.io$BASE"

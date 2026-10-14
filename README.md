@@ -6,7 +6,7 @@ One Flutter app, **Flutter Counter**, that proves Flutter can be a complete Web3
 2. **Authenticates** users in three ways:
    - the app is the wallet;
    - it connects to wallets already installed on the device, without an SDK;
-   - it connects through an SDK (Reown).
+   - it connects through an SDK (Reown AppKit, and near_wallet_connect for NEAR).
 
    Users then sign in to a backend with a signed message.
 
@@ -21,6 +21,21 @@ One Flutter app, **Flutter Counter**, that proves Flutter can be a complete Web3
 | NEAR         | testnet                                             |
 
 > **Testnets only.** The keys in `keys/` are public on purpose so that anyone can redeploy and test. Never send real funds to them.
+
+## How Wallets Connect
+
+Whichever way a wallet connects, the rest of the app sees the same signer: an address that signs messages (for sign-in) and transactions (for writes).
+
+|                                               | Android                                                        | iOS                                     | Web                                                                     | macOS, Windows, Linux |
+| --------------------------------------------- | -------------------------------------------------------------- | --------------------------------------- | ----------------------------------------------------------------------- | --------------------- |
+| 1. In-app wallet                              | every chain                                                    | every chain                             | every chain                                                             | every chain           |
+| 2. Installed wallet, no SDK                   | Solana: Mobile Wallet Adapter, Phantom and Solflare deep links | Solana: Phantom and Solflare deep links | EVM (EIP-6963), Solana and Sui (Wallet Standard), Osmosis (Keplr, Leap) | none                  |
+| 2. Open the web version in a wallet's browser | MetaMask, Phantom, Solflare, Keplr                             | same                                    | (not needed)                                                            | none                  |
+| 3. SDK                                        | EVM and Solana (Reown AppKit), NEAR (Intear)                   | same                                    | NEAR (Intear)                                                           | NEAR (Intear)         |
+
+Gaps are real limits, not missing work: EVM, Sui and Cosmos wallet apps can only be reached from a native app through WalletConnect, and NEAR wallets have no SDK-free way in. The Sign in screen explains each one where it applies.
+
+Reown needs a project ID. The one in `flutter/lib/src/wallet/sdk/sdk_wallets.dart` is public and only accepts this app's IDs (`com.keepdeploying.flutter_counter`, `com.keepdeploying.flutterCounter`). For your own app, create a project at [dashboard.reown.com](https://dashboard.reown.com) and allowlist your app's IDs there.
 
 ## Repo Layout
 
@@ -55,7 +70,14 @@ cd flutter
 flutter run
 ```
 
-`tool/setup_platforms.dart` runs `flutter create` for Android, iOS, web, macOS, Windows and Linux. It then applies the changes this app needs, such as the Android INTERNET permission, macOS network access, the shared signing key, and what `local_auth` needs for fingerprint and Face ID unlock (a `FlutterFragmentActivity`, the `USE_BIOMETRIC` permission, an AppCompat launch theme and `NSFaceIDUsageDescription`). It is safe to run again.
+`tool/setup_platforms.dart` runs `flutter create` for Android, iOS, web, macOS, Windows and Linux. It then applies the changes this app needs:
+
+- the Android INTERNET permission, macOS network access and the shared signing key;
+- what `local_auth` needs for fingerprint and Face ID unlock (a `FlutterFragmentActivity`, the `USE_BIOMETRIC` permission, an AppCompat launch theme and `NSFaceIDUsageDescription`);
+- what wallets need: the `fluttercounter://` link they answer on, the wallet apps the app may look for (Android `<queries>`, iOS `LSApplicationQueriesSchemes`), plain WebSockets to `localhost` for the Mobile Wallet Adapter, and Flutter's own deep linking turned off;
+- a Gradle fix for a plugin Reown AppKit brings in (`coinbase_wallet_sdk` compiles against an old Android API and names a file it doesn't ship).
+
+It is safe to run again, and worth re-running after pulling changes to it.
 
 ## Run From Your IDE
 

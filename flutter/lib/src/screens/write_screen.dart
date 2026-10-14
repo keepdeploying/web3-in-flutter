@@ -121,8 +121,9 @@ class _WriteScreenState extends State<WriteScreen> {
           HappeningStep(
             title: 'Read the counter again: $now',
             detail:
-                'Confirmed in ${(result.elapsed.inMilliseconds / 1000).toStringAsFixed(1)} s. Anyone can now '
-                'read the new value, as the Read screen does.',
+                'Confirmed in ${(result.elapsed.inMilliseconds / 1000).toStringAsFixed(1)} s'
+                '${signer is InAppSigner ? '' : ', counting the time you took to approve'}. Anyone can now read the '
+                'new value, as the Read screen does.',
             link: Uri.parse(network.txUrl(result.txId)),
             status: StepStatus.done,
           ),

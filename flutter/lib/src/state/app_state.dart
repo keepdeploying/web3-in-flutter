@@ -131,7 +131,12 @@ class AppState extends ChangeNotifier {
   SignInLevel get signInLevel => _signInLevel;
   String get serverUrl => _serverUrl;
 
-  set network(Network value) => _update(() => _network = value);
+  set network(Network value) => _update(() {
+    // A session belongs to an account on one chain family. Moving to another
+    // family means signing in again, with that family's account.
+    if (session.signer?.family case final family? when family != value.family) session.signOut();
+    _network = value;
+  });
   set themeMode(ThemeMode value) => _update(() => _themeMode = value);
   set backendMode(BackendMode value) => _update(() {
     _backendMode = value;

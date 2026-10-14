@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_counter/main.dart';
 import 'package:flutter_counter/src/backend/backend.dart';
+import 'package:flutter_counter/src/chains/networks.dart';
 import 'package:flutter_counter/src/state/app_state.dart';
 import 'package:flutter_counter/src/state/services.dart';
 import 'package:flutter_counter/src/wallet/vault.dart';
@@ -61,6 +62,17 @@ void main() {
     await tapText(tester, 'Sign out');
     expect(state.session.signedIn, isFalse);
     expect(find.text('Sign in to write yours'), findsOneWidget);
+
+    // Another EVM network keeps the session; another chain family ends it.
+    await tapText(tester, 'Sign in as ...');
+    state.network = Networks.baseSepolia;
+    await tester.pumpAndSettle();
+    expect(state.session.signedIn, isTrue);
+    state.network = Networks.solanaDevnet;
+    await tester.pumpAndSettle();
+    expect(state.session.signedIn, isFalse);
+    state.network = Networks.sepolia;
+    await tester.pumpAndSettle();
 
     // Locking the wallet ends the session too.
     await tapText(tester, 'Sign in as ...');
