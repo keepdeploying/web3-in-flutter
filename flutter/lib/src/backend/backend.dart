@@ -22,7 +22,7 @@ abstract class Backend {
 
 /// Runs the server's Dart code inside the app.
 ///
-/// Handy for the web demo and the workshop: nothing to deploy. But it is a
+/// Handy for demos and the web version: nothing to deploy. But it is a
 /// simulation: a real app must verify signatures on a server it controls,
 /// because anything running on the user's device can be changed by them.
 class LocalBackend implements Backend {

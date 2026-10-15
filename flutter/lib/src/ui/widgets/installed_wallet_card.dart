@@ -176,7 +176,7 @@ class _InstalledWalletCardState extends State<InstalledWalletCard> {
     ChainFamily.sui => 'Sui wallets barely support WalletConnect yet, so this app leaves Sui to options 1 and 2.',
     ChainFamily.cosmos =>
       'No Flutter SDK connects Cosmos wallets on Osmosis testnet. Use the in-app wallet, or Keplr on the web.',
-    ChainFamily.near => 'No NEAR wallet supports testnet here.',
+    ChainFamily.near => 'No NEAR wallet SDK works on this platform.',
   };
 
   Future<void> _signTest(InstalledSigner signer, Network network) async {

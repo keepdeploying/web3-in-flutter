@@ -140,11 +140,12 @@ class ReownWallet extends InstalledWallet {
   }
 
   /// Sends one request through the session, to the wallet on the other end.
-  Future<dynamic> request(ReownAppKitModal appKit, Network network, String method, Object params) async {
+  /// Without a [network], it goes to the chain the session is on.
+  Future<dynamic> request(ReownAppKitModal appKit, Network? network, String method, Object params) async {
     try {
       return await appKit.request(
         topic: appKit.session?.topic,
-        chainId: chainIdOf(network),
+        chainId: network == null ? appKit.selectedChain!.chainId : chainIdOf(network),
         request: SessionRequestParams(method: method, params: params),
       );
     } on JsonRpcError catch (e) {
@@ -185,7 +186,9 @@ class ReownEvmSigner extends _ReownSigner implements EvmTransactionSender {
   @override
   Future<SignedMessage> signMessage(String message, {List<int>? nearNonce}) async {
     final hex = BytesUtils.toHexString(utf8.encode(message), prefix: '0x');
-    final signature = await wallet.request(appKit, Networks.sepolia, 'personal_sign', [hex, address]);
+    // A message signature is the same on every EVM chain, so it goes to
+    // whichever chain the session is on.
+    final signature = await wallet.request(appKit, null, 'personal_sign', [hex, address]);
     return SignedMessage(family: family, address: address, message: message, signature: '$signature');
   }
 
